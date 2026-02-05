@@ -25,4 +25,4 @@ RUN ./mvnw clean package -DskipTests
 EXPOSE 8082
 
 # Run the jar
-CMD ["java", "-jar", "target/*.jar"]
+CMD ["java", "-jar", "target/item-service-0.0.1-SNAPSHOT.jar"]
