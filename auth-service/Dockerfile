@@ -1,28 +1,18 @@
-# ===============================
-# Build stage
-# ===============================
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM eclipse-temurin:21-jdk-alpine
+
 WORKDIR /app
 
-# Copy pom and download deps first (cache optimization)
+COPY mvnw .
+COPY .mvn .mvn
 COPY pom.xml .
-RUN mvn dependency:go-offline
 
-# Copy source and build
-COPY src ./src
-RUN mvn clean package -DskipTests
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline
 
-# ===============================
-# Runtime stage
-# ===============================
-FROM eclipse-temurin:17-jre
-WORKDIR /app
+COPY src src
 
-# Copy the built jar
-COPY --from=build /app/target/auth-service-0.0.1-SNAPSHOT.jar app.jar
+RUN ./mvnw clean package -DskipTests
 
-# Render injects PORT automatically
 EXPOSE 10000
 
-# Run app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "target/auth-service-0.0.1-SNAPSHOT.jar"]
