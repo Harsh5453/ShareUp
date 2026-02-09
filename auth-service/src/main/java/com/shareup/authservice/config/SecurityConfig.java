@@ -23,11 +23,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+        	.cors(cors -> {})
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> auth
+            ) 
+            .authorizeHttpRequests(auth -> auth 
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/validate").permitAll()
                 .requestMatchers("/api/profile/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
