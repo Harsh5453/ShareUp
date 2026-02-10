@@ -28,50 +28,52 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        return http
+        http
             .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
 
-                //  Allow preflight requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Borrower actions
                 .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasAuthority("BORROWER")
                 .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasAuthority("BORROWER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasAuthority("BORROWER")
 
-                // Owner actions
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasAuthority("OWNER")
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasAuthority("OWNER")
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasAuthority("OWNER")
+
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasAuthority("OWNER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasAuthority("OWNER")
-
-                // Public image access
-                .requestMatchers(HttpMethod.GET, "/api/rentals/*/return-image").permitAll()
 
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        return http.build();
     }
 
+   
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
-
-        //  Add frontend URL explicitly
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "https://share-khclzatcs-harshs-projects-1c5cf0ac.vercel.app"
+            "https://share-g3a2q3e9m-harshs-projects-1c5cf0ac.vercel.app"
         ));
-
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
+    }
+}
+
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
