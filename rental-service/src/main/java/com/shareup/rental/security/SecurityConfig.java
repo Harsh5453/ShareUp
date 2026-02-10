@@ -24,38 +24,33 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
-
-    @Bean
+   @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http
+        return http
             .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+       .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Borrower
+                .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasRole("BORROWER")
+                .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasRole("BORROWER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasRole("BORROWER")
+                // Owner
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasRole("OWNER")
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasRole("OWNER")
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasRole("OWNER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasRole("OWNER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasRole("OWNER")
 
-                .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasAuthority("BORROWER")
-                .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasAuthority("BORROWER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasAuthority("BORROWER")
-
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasAuthority("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasAuthority("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasAuthority("OWNER")
-
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasAuthority("OWNER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasAuthority("OWNER")
-
-                .anyRequest().authenticated()
+              .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
-
-        return http.build();
+            .build();
     }
-
-   
-    @Bean
+  @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
@@ -63,13 +58,11 @@ public class SecurityConfig {
             "http://localhost:5173",
             "https://share-g3a2q3e9m-harshs-projects-1c5cf0ac.vercel.app"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
-    }
+	UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();        
+source.registerCorsConfiguration("/**", config);       
+ return source;    
+}
 }
