@@ -34,21 +34,22 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
 
+                //  Allow preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                 // Borrower actions
-                .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasRole("BORROWER")
-                .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasRole("BORROWER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasRole("BORROWER")
+                .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasAuthority("BORROWER")
+                .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasAuthority("BORROWER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasAuthority("BORROWER")
 
                 // Owner actions
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasRole("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasRole("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasRole("OWNER")
-               
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasAuthority("OWNER")
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasAuthority("OWNER")
+                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasAuthority("OWNER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasAuthority("OWNER")
+                .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasAuthority("OWNER")
 
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasRole("OWNER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasRole("OWNER")
-
-                // Image access
+                // Public image access
                 .requestMatchers(HttpMethod.GET, "/api/rentals/*/return-image").permitAll()
 
                 .anyRequest().authenticated()
@@ -57,14 +58,20 @@ public class SecurityConfig {
             .build();
     }
 
-    // CORS for frontend
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
+
+        //  Add frontend URL explicitly
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "https://share-khclzatcs-harshs-projects-1c5cf0ac.vercel.app"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
