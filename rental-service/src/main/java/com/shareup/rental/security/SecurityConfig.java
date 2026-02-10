@@ -24,7 +24,8 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
-   @Bean
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         return http
@@ -32,12 +33,14 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-       .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // Borrower
                 .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasRole("BORROWER")
                 .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasRole("BORROWER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasRole("BORROWER")
+
                 // Owner
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasRole("OWNER")
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasRole("OWNER")
@@ -45,12 +48,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasRole("OWNER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasRole("OWNER")
 
-              .anyRequest().authenticated()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
-  @Bean
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
@@ -58,11 +62,12 @@ public class SecurityConfig {
             "http://localhost:5173",
             "https://share-g3a2q3e9m-harshs-projects-1c5cf0ac.vercel.app"
         ));
-config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
-	UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();        
-source.registerCorsConfiguration("/**", config);       
- return source;    
-}
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
