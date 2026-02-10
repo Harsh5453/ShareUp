@@ -32,14 +32,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        //  Allow CORS preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
-            filterChain.doFilter(request, response);
             return;
         }
 
         String header = request.getHeader("Authorization");
 
+        // If no token, continue (SecurityConfig will decide)
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -47,26 +48,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
 
+        // Invalid token
         if (!jwtUtil.validateToken(token)) {
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
+        // Extract user data
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
         String phone = jwtUtil.extractPhone(token);
         String address = jwtUtil.extractAddress(token);
 
+        // Set authentication in Spring Security context
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId.toString(),
+                        userId.toString(), // principal
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        // Make user info available to controllers
         Map<String, Object> authUser = new HashMap<>();
         authUser.put("userId", userId);
         authUser.put("role", role);
