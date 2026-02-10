@@ -73,11 +73,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
-    }
-}
