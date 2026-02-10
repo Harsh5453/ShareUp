@@ -33,9 +33,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        //  Allow CORS preflight
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
 
-        // Allow public endpoints
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -54,18 +59,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String phone = jwtUtil.extractPhone(token);
         String address = jwtUtil.extractAddress(token);
 
-        // Spring Security authentication
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId.toString(),   // <-- STORE STRING
+                        userId.toString(),
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 );
-                    
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Make full user info available to controllers/services
         Map<String, Object> authUser = new HashMap<>();
         authUser.put("userId", userId);
         authUser.put("role", role);
