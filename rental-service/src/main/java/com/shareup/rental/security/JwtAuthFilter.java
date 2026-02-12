@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -32,15 +30,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        //  Allow CORS preflight requests
+        // Allow CORS preflight
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatus(HttpServletResponse.SC_OK);
+            filterChain.doFilter(request, response);
             return;
         }
 
         String header = request.getHeader("Authorization");
 
-        // If no token, continue (SecurityConfig will decide)
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -48,37 +45,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
 
-        // Invalid token
+        // ❌ invalid token
         if (!jwtUtil.validateToken(token)) {
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        // Extract user data
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
-        String phone = jwtUtil.extractPhone(token);
-        String address = jwtUtil.extractAddress(token);
 
-        // Set authentication in Spring Security context
+        String authority =
+                role.startsWith("ROLE_") ? role : "ROLE_" + role;
+
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId.toString(), // principal
+                        userId.toString(),
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                        List.of(new SimpleGrantedAuthority(authority))
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Make user info available to controllers
-        Map<String, Object> authUser = new HashMap<>();
-        authUser.put("userId", userId);
-        authUser.put("role", role);
-        authUser.put("phone", phone);
-        authUser.put("address", address);
-
-        request.setAttribute("authUser", authUser);
 
         filterChain.doFilter(request, response);
     }
