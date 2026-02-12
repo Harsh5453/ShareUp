@@ -63,6 +63,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         null,
                         List.of(new SimpleGrantedAuthority(authority))
                 );
+        authentication.setAuthenticated(true);
+SecurityContextHolder.getContext().setAuthentication(authentication);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
