@@ -21,7 +21,7 @@ public class JwtUtil {
         try {
             extractAllClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
@@ -32,14 +32,6 @@ public class JwtUtil {
 
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
-    }
-
-    public String extractPhone(String token) {
-        return extractClaim(token, claims -> claims.get("phone", String.class));
-    }
-
-    public String extractAddress(String token) {
-        return extractClaim(token, claims -> claims.get("address", String.class));
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {
