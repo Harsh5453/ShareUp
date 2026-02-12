@@ -30,7 +30,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Allow CORS preflight
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -45,27 +44,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
 
-        // ❌ invalid token
         if (!jwtUtil.validateToken(token)) {
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response);
             return;
         }
 
         Long userId = jwtUtil.extractUserId(token);
-        String role = jwtUtil.extractRole(token);
+        String role = jwtUtil.extractRole(token).toUpperCase();
 
-        String authority =
-                role.startsWith("ROLE_") ? role : "ROLE_" + role;
-
-        UsernamePasswordAuthenticationToken authentication =
+        UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
-                        userId.toString(),
+                        userId,
                         null,
-                        List.of(new SimpleGrantedAuthority(authority))
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         filterChain.doFilter(request, response);
     }
