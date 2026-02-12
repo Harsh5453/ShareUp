@@ -30,6 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // allow preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -46,22 +47,25 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (!jwtUtil.validateToken(token)) {
             SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         Long userId = jwtUtil.extractUserId(token);
-        String role = jwtUtil.extractRole(token).toUpperCase();
+        String role = jwtUtil.extractRole(token);
 
-        UsernamePasswordAuthenticationToken auth =
+        String authority =
+                role.startsWith("ROLE_") ? role : "ROLE_" + role;
+
+        UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId,
+                        userId.toString(),
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                        List.of(new SimpleGrantedAuthority(authority))
                 );
 
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
-}
+            }
