@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -32,6 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // Allow preflight CORS
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -54,10 +53,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
-        String phone = jwtUtil.extractPhone(token);
-        String address = jwtUtil.extractAddress(token);
 
-        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        String authority = "ROLE_" + role;
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -68,15 +65,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        
-        Map<String, Object> authUser = new HashMap<>();
-        authUser.put("userId", userId);
-        authUser.put("role", role);
-        authUser.put("phone", phone);
-        authUser.put("address", address);
-
-        request.setAttribute("authUser", authUser);
-
         filterChain.doFilter(request, response);
     }
-            }
+}
