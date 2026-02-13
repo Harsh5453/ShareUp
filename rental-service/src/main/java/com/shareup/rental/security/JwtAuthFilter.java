@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -45,24 +47,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         if (!jwtUtil.validateToken(token)) {
+            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
+        String phone = jwtUtil.extractPhone(token);
+        String address = jwtUtil.extractAddress(token);
 
-        String authority = "ROLE_" + role;
+        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId,   //  store Long directly
+                        userId.toString(),
                         null,
                         List.of(new SimpleGrantedAuthority(authority))
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        
+        Map<String, Object> authUser = new HashMap<>();
+        authUser.put("userId", userId);
+        authUser.put("role", role);
+        authUser.put("phone", phone);
+        authUser.put("address", address);
+
+        request.setAttribute("authUser", authUser);
+
         filterChain.doFilter(request, response);
     }
-        }
+            }
