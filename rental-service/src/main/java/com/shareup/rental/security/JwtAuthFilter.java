@@ -30,7 +30,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // allow preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -46,7 +45,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         if (!jwtUtil.validateToken(token)) {
-            SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -54,20 +52,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
 
-        String authority =
-                role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        String authority = "ROLE_" + role;
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userId.toString(),
+                        userId,   //  store Long directly
                         null,
                         List.of(new SimpleGrantedAuthority(authority))
                 );
-        authentication.setAuthenticated(true);
-SecurityContextHolder.getContext().setAuthentication(authentication);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
-            }
+        }
