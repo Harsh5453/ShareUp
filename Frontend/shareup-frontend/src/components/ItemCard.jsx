@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom'
 
 export default function ItemCard({ item }) {
-  const imageUrl = item.imageUrl
-    ? `${import.meta.env.VITE_ITEM_API}/api/images/${item.imageUrl.replace(/^.*[\\/]/, '')}`
-    : '/placeholder.png'
+  const imageUrl = item.imageUrl || '/placeholder.png'
+
 
   return (
     <div className="group bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden border">
