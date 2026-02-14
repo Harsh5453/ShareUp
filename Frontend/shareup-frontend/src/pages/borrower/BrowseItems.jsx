@@ -50,12 +50,8 @@ export default function BrowseItems() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map(i => {
-          const imageUrl = i.imageUrl
-            ? `${import.meta.env.VITE_ITEM_API}/api/images/${i.imageUrl.replace(
-                /^.*[\\/]/,
-                ''
-              )}`
-            : '/placeholder.png'
+          const imageUrl = item.imageUrl || '/placeholder.png'
+
 
           return (
             <div
