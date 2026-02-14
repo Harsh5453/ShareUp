@@ -1,5 +1,7 @@
 package com.shareup.item.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.shareup.item.dto.ItemRequestDTO;
 import com.shareup.item.model.Item;
 import com.shareup.item.model.ItemStatus;
@@ -8,19 +10,18 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ItemService {
 
     private final ItemRepository itemRepository;
-    private final String uploadDir = "uploads";
+    private final Cloudinary cloudinary;
 
-    public ItemService(ItemRepository itemRepository) {
+    public ItemService(ItemRepository itemRepository, Cloudinary cloudinary) {
         this.itemRepository = itemRepository;
+        this.cloudinary = cloudinary;
     }
 
     // ---------- CREATE ITEM (OWNER ONLY) ----------
@@ -50,17 +51,20 @@ public class ItemService {
                 throw new AccessDeniedException("You are not the owner of this item");
             }
 
-            Files.createDirectories(Paths.get(uploadDir));
+            // Upload to Cloudinary
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "shareup-items"
+                    )
+            );
 
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(uploadDir).resolve(filename);
+            String imageUrl = uploadResult.get("secure_url").toString();
 
-            Files.write(path, file.getBytes());
-
-            item.setImageUrl(filename);
+            item.setImageUrl(imageUrl);
             itemRepository.save(item);
 
-            return filename;
+            return imageUrl;
 
         } catch (Exception e) {
             throw new RuntimeException("Image upload failed", e);
@@ -106,7 +110,6 @@ public class ItemService {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
-       
         if (item.getStatus() == null) {
             item.setStatus(ItemStatus.AVAILABLE);
             itemRepository.save(item);
@@ -118,6 +121,4 @@ public class ItemService {
 
         return item;
     }
-
-    
 }
