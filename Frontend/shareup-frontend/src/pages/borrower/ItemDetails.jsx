@@ -41,12 +41,8 @@ export default function ItemDetails() {
   if (loading) return <p>Loading...</p>
   if (!item) return <p>Item not found</p>
 
-  const imageUrl = item.imageUrl
-    ? `${import.meta.env.VITE_ITEM_API}/api/images/${item.imageUrl.replace(
-        /^.*[\\/]/,
-        ''
-      )}`
-    : '/placeholder.png'
+ const imageUrl = item.imageUrl || '/placeholder.png'
+
 
   return (
     <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow">
