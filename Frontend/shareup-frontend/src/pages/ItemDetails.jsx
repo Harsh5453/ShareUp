@@ -49,9 +49,7 @@ const requestRental = async () => {
   if (loading) return <p>Loading...</p>
   if (!item) return <p>Item not found</p>
 
-  const imageUrl = item.imageUrl
-    ? `${import.meta.env.VITE_ITEM_API}/api/images/${item.imageUrl.replace(/^.*[\\/]/, '')}`
-    : '/placeholder.png'
+ const imageUrl = item.imageUrl || '/placeholder.png'
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow">
