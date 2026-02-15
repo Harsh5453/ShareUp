@@ -71,9 +71,9 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://share-g3a2q3e9m-harshs-projects-1c5cf0ac.vercel.app"
+        config.setAllowedOriginPatterns(List.of(
+        "http://localhost:5173",
+        "https://*.vercel.app"
         ));
 
         config.setAllowedMethods(List.of(
