@@ -15,9 +15,11 @@ public class CorsConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-                "https://share-6vkef9r9x-harshs-projects-1c5cf0ac.vercel.app"
-        ));
+        config.setAllowedOriginPatterns(List.of(
+        "http://localhost:5173",
+        "https://*.vercel.app"
+));
+
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"
