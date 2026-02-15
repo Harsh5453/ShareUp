@@ -37,26 +37,33 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .authorizeHttpRequests(auth -> auth
-
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/error").permitAll()
-
                 .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasRole("BORROWER")
                 .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasRole("BORROWER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasRole("BORROWER")
-
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasRole("OWNER")
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasRole("OWNER")
                 .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasRole("OWNER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasRole("OWNER")
                 .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasRole("OWNER")
-
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> null;
+    }
+}
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
