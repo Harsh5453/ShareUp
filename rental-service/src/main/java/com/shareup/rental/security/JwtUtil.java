@@ -19,14 +19,16 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
     try {
+        System.out.println("VALIDATING TOKEN...");
         extractAllClaims(token);
+        System.out.println("TOKEN VALID");
         return true;
     } catch (Exception e) {
         System.out.println("JWT VALIDATION FAILED:");
         e.printStackTrace();
         return false;
     }
-}
+    }
 
 
    public Long extractUserId(String token) {
