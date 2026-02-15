@@ -27,66 +27,88 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         return http
-            .csrf(csrf -> csrf.disable())
+                // Disable CSRF (JWT based API)
+                .csrf(csrf -> csrf.disable())
 
-            .cors(Customizer.withDefaults())
+                // Enable CORS
+                .cors(Customizer.withDefaults())
 
-            .sessionManagement(sess ->
-                    sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                // Stateless session (JWT)
+                .sessionManagement(sess ->
+                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
-            .authorizeHttpRequests(auth -> auth
+                // Authorization rules
+                .authorizeHttpRequests(auth -> auth
 
-                // allow preflight globally
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Allow CORS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // allow system endpoints
-                .requestMatchers("/error").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                        // Allow system endpoints
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
 
-                // Borrower endpoints
-                .requestMatchers(HttpMethod.POST, "/api/rentals/request").hasRole("BORROWER")
-                .requestMatchers(HttpMethod.POST, "/api/rentals/*/return").hasRole("BORROWER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/me").hasRole("BORROWER")
+                        // ---------------- BORROWER ----------------
+                        .requestMatchers(HttpMethod.POST, "/api/rentals/request")
+                        .hasAuthority("BORROWER")
 
-                // Owner endpoints
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*").hasRole("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*").hasRole("OWNER")
-                .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*").hasRole("OWNER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner").hasRole("OWNER")
-                .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.POST, "/api/rentals/*/return")
+                        .hasAuthority("BORROWER")
 
-                // everything else must be authenticated
-                .anyRequest().authenticated()
-            )
+                        .requestMatchers(HttpMethod.GET, "/api/rentals/me")
+                        .hasAuthority("BORROWER")
 
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                        // ---------------- OWNER ----------------
+                        .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*")
+                        .hasAuthority("OWNER")
 
-            .build();
+                        .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*")
+                        .hasAuthority("OWNER")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*")
+                        .hasAuthority("OWNER")
+
+                        .requestMatchers(HttpMethod.GET, "/api/rentals/owner")
+                        .hasAuthority("OWNER")
+
+                        .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns")
+                        .hasAuthority("OWNER")
+
+                        // Everything else must be authenticated
+                        .anyRequest().authenticated()
+                )
+
+                // Add JWT filter
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .build();
     }
 
-    // GLOBAL CORS CONFIG
+    // ---------------- GLOBAL CORS CONFIG ----------------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
+        // Allow localhost and all Vercel deployments
         config.setAllowedOriginPatterns(List.of(
-        "http://localhost:5173",
-        "https://*.vercel.app"
+                "http://localhost:5173",
+                "https://*.vercel.app"
         ));
 
         config.setAllowedMethods(List.of(
-                "GET","POST","PUT","DELETE","OPTIONS"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
 
         config.setAllowedHeaders(List.of("*"));
+
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
+
         return source;
     }
 }
