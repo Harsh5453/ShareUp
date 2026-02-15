@@ -18,13 +18,16 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token) {
-        try {
-            extractAllClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+    try {
+        extractAllClaims(token);
+        return true;
+    } catch (Exception e) {
+        System.out.println("JWT VALIDATION FAILED:");
+        e.printStackTrace();
+        return false;
     }
+}
+
 
    public Long extractUserId(String token) {
     Object userId = extractAllClaims(token).get("userId");
