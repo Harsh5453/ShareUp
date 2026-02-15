@@ -27,7 +27,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         return http
-                // Disable CSRF (JWT based API)
+                // Disable CSRF (JWT API)
                 .csrf(csrf -> csrf.disable())
 
                 // Enable CORS
@@ -41,7 +41,7 @@ public class SecurityConfig {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow CORS preflight requests
+                        // Allow CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Allow system endpoints
@@ -50,29 +50,29 @@ public class SecurityConfig {
 
                         // ---------------- BORROWER ----------------
                         .requestMatchers(HttpMethod.POST, "/api/rentals/request")
-                        .hasAuthority("BORROWER")
+                        .hasRole("BORROWER")
 
                         .requestMatchers(HttpMethod.POST, "/api/rentals/*/return")
-                        .hasAuthority("BORROWER")
+                        .hasRole("BORROWER")
 
                         .requestMatchers(HttpMethod.GET, "/api/rentals/me")
-                        .hasAuthority("BORROWER")
+                        .hasRole("BORROWER")
 
                         // ---------------- OWNER ----------------
                         .requestMatchers(HttpMethod.PUT, "/api/rentals/approve/*")
-                        .hasAuthority("OWNER")
+                        .hasRole("OWNER")
 
                         .requestMatchers(HttpMethod.PUT, "/api/rentals/reject/*")
-                        .hasAuthority("OWNER")
+                        .hasRole("OWNER")
 
                         .requestMatchers(HttpMethod.PUT, "/api/rentals/approve-return/*")
-                        .hasAuthority("OWNER")
+                        .hasRole("OWNER")
 
                         .requestMatchers(HttpMethod.GET, "/api/rentals/owner")
-                        .hasAuthority("OWNER")
+                        .hasRole("OWNER")
 
                         .requestMatchers(HttpMethod.GET, "/api/rentals/owner/returns")
-                        .hasAuthority("OWNER")
+                        .hasRole("OWNER")
 
                         // Everything else must be authenticated
                         .anyRequest().authenticated()
@@ -90,7 +90,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow localhost and all Vercel deployments
+        // Allow localhost + all Vercel deployments
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "https://*.vercel.app"
