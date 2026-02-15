@@ -33,27 +33,37 @@ public class RentalController {
 
     // ---------------- BORROW REQUEST ----------------
     @PostMapping("/request")
-    public ResponseEntity<RentalRequest> borrow(
-            @RequestBody BorrowRequestDTO dto,
-            Authentication authentication,
-            HttpServletRequest request) {
+public ResponseEntity<?> borrow(
+        @RequestBody BorrowRequestDTO dto,
+        Authentication authentication,
+        HttpServletRequest request) {
 
-        Map<String, Object> authUser =
-                (Map<String, Object>) request.getAttribute("authUser");
-
-        Long borrowerId = userId(authentication);
-        String phone = (String) authUser.get("phone");
-        String address = (String) authUser.get("address");
-
-        RentalRequest result = rentalService.createBorrowRequest(
-                borrowerId,
-                phone,
-                address,
-                dto
-        );
-
-        return ResponseEntity.ok(result);
+    if (authentication == null) {
+        return ResponseEntity.status(401).body("Unauthorized");
     }
+
+    Map<String, Object> authUser =
+            (Map<String, Object>) request.getAttribute("authUser");
+
+    if (authUser == null) {
+        return ResponseEntity.status(401).body("Invalid or expired token");
+    }
+
+    Long borrowerId = Long.parseLong(authentication.getPrincipal().toString());
+
+    String phone = (String) authUser.get("phone");
+    String address = (String) authUser.get("address");
+
+    RentalRequest result = rentalService.createBorrowRequest(
+            borrowerId,
+            phone,
+            address,
+            dto
+    );
+
+    return ResponseEntity.ok(result);
+}
+
 
     // ---------------- APPROVE RENTAL ----------------
     @PutMapping("/approve/{id}")
