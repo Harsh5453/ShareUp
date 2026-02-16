@@ -2,12 +2,13 @@ package com.shareup.rental.service;
 
 import com.shareup.rental.dto.BorrowRequestDTO;
 import com.shareup.rental.dto.ItemResponse;
-import com.shareup.rental.dto.RatingRequestDTO;
 import com.shareup.rental.model.Rating;
 import com.shareup.rental.model.RentalRequest;
 import com.shareup.rental.model.RentalStatus;
 import com.shareup.rental.repository.RatingRepository;
 import com.shareup.rental.repository.RentalRepository;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,10 +28,13 @@ public class RentalService {
     private final RatingRepository ratingRepository;
     private final RestTemplate restTemplate;
 
-    private final String uploadDir = "uploads/returns";
+    @Value("${auth.service.url}")
+    private String authServiceUrl;
 
-    private final String AUTH_SERVICE_URL = "http://localhost:8081/api/users/";
-    private final String ITEM_SERVICE_URL = "http://localhost:8082/api/items/";
+    @Value("${item.service.url}")
+    private String itemServiceUrl;
+
+    private final String uploadDir = "uploads/returns";
 
     public RentalService(RentalRepository rentalRepository,
                          EmailService emailService,
@@ -80,12 +84,12 @@ public class RentalService {
         }
 
         ItemResponse item = restTemplate.getForObject(
-                ITEM_SERVICE_URL + req.getItemId(),
+                itemServiceUrl + "/api/items/" + req.getItemId(),
                 ItemResponse.class
         );
 
         if (item == null || item.getPickupAddress() == null) {
-            throw new RuntimeException("Pickup address not found in item");
+            throw new RuntimeException("Pickup address not found");
         }
 
         req.setPickupAddress(item.getPickupAddress());
@@ -96,14 +100,14 @@ public class RentalService {
         rentalRepository.save(req);
 
         rejectOtherRequests(req);
-
         syncItemRented(req.getItemId());
-
         sendBorrowerApprovalEmail(req, item);
 
         return req;
     }
-    // =================REJECT REQUEST ======================
+
+    // ================= REJECT =================
+
     public RentalRequest rejectRequest(String rentalId, Long ownerId) {
 
         RentalRequest req = rentalRepository.findById(rentalId)
@@ -114,13 +118,8 @@ public class RentalService {
         }
 
         req.setStatus(RentalStatus.REJECTED);
-        RentalRequest saved = rentalRepository.save(req);
-
-        sendBorrowerRejectEmail(saved);
-
-        return saved;
+        return rentalRepository.save(req);
     }
-
 
     // ================= RETURN REQUEST =================
 
@@ -141,11 +140,7 @@ public class RentalService {
         req.setReturnRequestedAt(LocalDateTime.now());
         req.setStatus(RentalStatus.RETURN_REQUESTED);
 
-        RentalRequest saved = rentalRepository.save(req);
-
-        sendOwnerReturnRequestEmail(saved);
-
-        return saved;
+        return rentalRepository.save(req);
     }
 
     // ================= APPROVE RETURN =================
@@ -161,11 +156,9 @@ public class RentalService {
 
         req.setStatus(RentalStatus.RETURN_APPROVED);
         req.setReturnApprovedAt(LocalDateTime.now());
+
         rentalRepository.save(req);
-
         syncItemAvailable(req.getItemId());
-
-        sendBorrowerReturnApprovedEmail(req);
 
         return req;
     }
@@ -174,83 +167,39 @@ public class RentalService {
 
     private void sendOwnerNewRequestEmail(RentalRequest req) {
 
-        Map user = restTemplate.getForObject(AUTH_SERVICE_URL + req.getOwnerId(), Map.class);
-        ItemResponse item = restTemplate.getForObject(ITEM_SERVICE_URL + req.getItemId(), ItemResponse.class);
+        Map user = restTemplate.getForObject(
+                authServiceUrl + "/api/users/" + req.getOwnerId(),
+                Map.class
+        );
+
+        ItemResponse item = restTemplate.getForObject(
+                itemServiceUrl + "/api/items/" + req.getItemId(),
+                ItemResponse.class
+        );
 
         if (user == null || item == null) return;
 
-        String body =
-                "You have received a new rental request.\n\n" +
-                "Item: " + item.getName() + " (Item ID: " + item.getId() + ")";
-
-        emailService.sendEmail((String) user.get("email"),
+        emailService.sendEmail(
+                (String) user.get("email"),
                 "New Rental Request - ShareUp",
-                body);
+                "Item: " + item.getName()
+        );
     }
 
     private void sendBorrowerApprovalEmail(RentalRequest req, ItemResponse item) {
 
-        Map user = restTemplate.getForObject(AUTH_SERVICE_URL + req.getBorrowerId(), Map.class);
+        Map user = restTemplate.getForObject(
+                authServiceUrl + "/api/users/" + req.getBorrowerId(),
+                Map.class
+        );
 
         if (user == null) return;
-
-        String body =
-                "Your rental request has been approved.\n\n" +
-                "Item: " + item.getName() + " (Item ID: " + item.getId() + ")\n" +
-                "Pickup Address: " + req.getPickupAddress();
-
-        emailService.sendEmail((String) user.get("email"),
-                "Rental Approved - ShareUp",
-                body);
-    }
-
-    private void sendBorrowerRejectEmail(RentalRequest req) {
-
-        Map user = restTemplate.getForObject(AUTH_SERVICE_URL + req.getBorrowerId(), Map.class);
-        ItemResponse item = restTemplate.getForObject(ITEM_SERVICE_URL + req.getItemId(), ItemResponse.class);
-
-        if (user == null || item == null) return;
-
-        String body =
-                "Your rental request for the following item has been rejected by the owner:\n\n" +
-                "Item: " + item.getName() + " (Item ID: " + item.getId() + ")\n\n" +
-                "You can browse other available items on ShareUp.\n\n" ;
 
         emailService.sendEmail(
                 (String) user.get("email"),
-                "Rental Request Rejected – ShareUp",
-                body
+                "Rental Approved - ShareUp",
+                "Pickup Address: " + req.getPickupAddress()
         );
-    }
-
-    private void sendOwnerReturnRequestEmail(RentalRequest req) {
-
-        Map user = restTemplate.getForObject(AUTH_SERVICE_URL + req.getOwnerId(), Map.class);
-
-        if (user == null) return;
-
-        String body =
-                "Borrower has requested to return the item.\n\n" +
-                "Item ID: " + req.getItemId();
-
-        emailService.sendEmail((String) user.get("email"),
-                "Return Requested - ShareUp",
-                body);
-    }
-
-    private void sendBorrowerReturnApprovedEmail(RentalRequest req) {
-
-        Map user = restTemplate.getForObject(AUTH_SERVICE_URL + req.getBorrowerId(), Map.class);
-
-        if (user == null) return;
-
-        String body =
-                "Your return request has been approved successfully.\n\n" +
-                "Item ID: " + req.getItemId();
-
-        emailService.sendEmail((String) user.get("email"),
-                "Return Approved - ShareUp",
-                body);
     }
 
     // ================= UTILITIES =================
@@ -269,13 +218,13 @@ public class RentalService {
 
     private void syncItemRented(String itemId) {
         try {
-            restTemplate.put(ITEM_SERVICE_URL + itemId + "/rent", null);
+            restTemplate.put(itemServiceUrl + "/api/items/" + itemId + "/rent", null);
         } catch (Exception ignored) {}
     }
 
     private void syncItemAvailable(String itemId) {
         try {
-            restTemplate.put(ITEM_SERVICE_URL + itemId + "/available", null);
+            restTemplate.put(itemServiceUrl + "/api/items/" + itemId + "/available", null);
         } catch (Exception ignored) {}
     }
 
@@ -290,8 +239,6 @@ public class RentalService {
             throw new RuntimeException("Image upload failed", e);
         }
     }
-
-    // ================= DASHBOARD & RATINGS  =================
 
     public List<RentalRequest> getRequestsForOwner(Long ownerId) {
         return rentalRepository.findByOwnerId(ownerId);
