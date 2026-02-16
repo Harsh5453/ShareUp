@@ -35,29 +35,18 @@ public class RentalController {
     @PostMapping("/request")
 public ResponseEntity<?> borrow(
         @RequestBody BorrowRequestDTO dto,
-        Authentication authentication,
-        HttpServletRequest request) {
+        Authentication authentication) {
 
     if (authentication == null) {
         return ResponseEntity.status(401).body("Unauthorized");
     }
 
-    Map<String, Object> authUser =
-            (Map<String, Object>) request.getAttribute("authUser");
-
-    if (authUser == null) {
-        return ResponseEntity.status(401).body("Invalid or expired token");
-    }
-
     Long borrowerId = Long.parseLong(authentication.getPrincipal().toString());
-
-    String phone = (String) authUser.get("phone");
-    String address = (String) authUser.get("address");
 
     RentalRequest result = rentalService.createBorrowRequest(
             borrowerId,
-            phone,
-            address,
+            null,
+            null,
             dto
     );
 
