@@ -64,7 +64,12 @@ public class RentalService {
 
         RentalRequest saved = rentalRepository.save(request);
 
-        sendOwnerNewRequestEmail(saved);
+        // ✅ Email wrapped safely
+        try {
+            sendOwnerNewRequestEmail(saved);
+        } catch (Exception e) {
+            System.out.println("Email failed (ignored): " + e.getMessage());
+        }
 
         return saved;
     }
@@ -83,10 +88,15 @@ public class RentalService {
             throw new RuntimeException("Unauthorized");
         }
 
-        ItemResponse item = restTemplate.getForObject(
-                itemServiceUrl + "/api/items/" + req.getItemId(),
-                ItemResponse.class
-        );
+        ItemResponse item = null;
+        try {
+            item = restTemplate.getForObject(
+                    itemServiceUrl + "/api/items/" + req.getItemId(),
+                    ItemResponse.class
+            );
+        } catch (Exception e) {
+            System.out.println("Item service failed: " + e.getMessage());
+        }
 
         if (item == null || item.getPickupAddress() == null) {
             throw new RuntimeException("Pickup address not found");
@@ -101,7 +111,12 @@ public class RentalService {
 
         rejectOtherRequests(req);
         syncItemRented(req.getItemId());
-        sendBorrowerApprovalEmail(req, item);
+
+        try {
+            sendBorrowerApprovalEmail(req, item);
+        } catch (Exception e) {
+            System.out.println("Approval email failed: " + e.getMessage());
+        }
 
         return req;
     }
@@ -167,39 +182,49 @@ public class RentalService {
 
     private void sendOwnerNewRequestEmail(RentalRequest req) {
 
-        Map user = restTemplate.getForObject(
-                authServiceUrl + "/api/users/" + req.getOwnerId(),
-                Map.class
-        );
+        try {
+            Map user = restTemplate.getForObject(
+                    authServiceUrl + "/api/users/" + req.getOwnerId(),
+                    Map.class
+            );
 
-        ItemResponse item = restTemplate.getForObject(
-                itemServiceUrl + "/api/items/" + req.getItemId(),
-                ItemResponse.class
-        );
+            ItemResponse item = restTemplate.getForObject(
+                    itemServiceUrl + "/api/items/" + req.getItemId(),
+                    ItemResponse.class
+            );
 
-        if (user == null || item == null) return;
+            if (user == null || item == null) return;
 
-        emailService.sendEmail(
-                (String) user.get("email"),
-                "New Rental Request - ShareUp",
-                "Item: " + item.getName()
-        );
+            emailService.sendEmail(
+                    (String) user.get("email"),
+                    "New Rental Request - ShareUp",
+                    "Item: " + item.getName()
+            );
+
+        } catch (Exception e) {
+            System.out.println("Owner email failed: " + e.getMessage());
+        }
     }
 
     private void sendBorrowerApprovalEmail(RentalRequest req, ItemResponse item) {
 
-        Map user = restTemplate.getForObject(
-                authServiceUrl + "/api/users/" + req.getBorrowerId(),
-                Map.class
-        );
+        try {
+            Map user = restTemplate.getForObject(
+                    authServiceUrl + "/api/users/" + req.getBorrowerId(),
+                    Map.class
+            );
 
-        if (user == null) return;
+            if (user == null) return;
 
-        emailService.sendEmail(
-                (String) user.get("email"),
-                "Rental Approved - ShareUp",
-                "Pickup Address: " + req.getPickupAddress()
-        );
+            emailService.sendEmail(
+                    (String) user.get("email"),
+                    "Rental Approved - ShareUp",
+                    "Pickup Address: " + req.getPickupAddress()
+            );
+
+        } catch (Exception e) {
+            System.out.println("Borrower email failed: " + e.getMessage());
+        }
     }
 
     // ================= UTILITIES =================
@@ -219,13 +244,17 @@ public class RentalService {
     private void syncItemRented(String itemId) {
         try {
             restTemplate.put(itemServiceUrl + "/api/items/" + itemId + "/rent", null);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("Item rent sync failed: " + e.getMessage());
+        }
     }
 
     private void syncItemAvailable(String itemId) {
         try {
             restTemplate.put(itemServiceUrl + "/api/items/" + itemId + "/available", null);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("Item available sync failed: " + e.getMessage());
+        }
     }
 
     private String saveImage(MultipartFile file) {
