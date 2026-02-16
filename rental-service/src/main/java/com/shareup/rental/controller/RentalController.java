@@ -3,7 +3,7 @@ package com.shareup.rental.controller;
 import com.shareup.rental.dto.BorrowRequestDTO;
 import com.shareup.rental.model.RentalRequest;
 import com.shareup.rental.service.RentalService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -30,53 +29,57 @@ public class RentalController {
         return Long.parseLong(authentication.getPrincipal().toString());
     }
 
+    // ================= BORROW REQUEST =================
 
-    // ---------------- BORROW REQUEST ----------------
     @PostMapping("/request")
-public ResponseEntity<?> borrow(
-        @RequestBody BorrowRequestDTO dto,
-        Authentication authentication) {
+    public ResponseEntity<?> borrow(
+            @RequestBody BorrowRequestDTO dto,
+            Authentication authentication) {
 
-    if (authentication == null) {
-        return ResponseEntity.status(401).body("Unauthorized");
+        if (authentication == null) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        Long borrowerId = userId(authentication);
+
+        RentalRequest result = rentalService.createBorrowRequest(
+                borrowerId,
+                null,
+                null,
+                dto
+        );
+
+        return ResponseEntity.ok(result);
     }
 
-    Long borrowerId = Long.parseLong(authentication.getPrincipal().toString());
+    // ================= APPROVE RENTAL =================
 
-    RentalRequest result = rentalService.createBorrowRequest(
-            borrowerId,
-            null,
-            null,
-            dto
-    );
-
-    return ResponseEntity.ok(result);
-}
-
-
-    // ---------------- APPROVE RENTAL ----------------
     @PutMapping("/approve/{id}")
     public ResponseEntity<RentalRequest> approveRental(
             @PathVariable String id,
-            Authentication authentication,
-            HttpServletRequest request) {
+            Authentication authentication) {
 
-        Map<String, Object> authUser =
-                (Map<String, Object>) request.getAttribute("authUser");
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         Long ownerId = userId(authentication);
-        String phone = (String) authUser.get("phone");
-        String pickupAddress = (String) authUser.get("address");
 
         return ResponseEntity.ok(
-                rentalService.approveRequest(id, ownerId, phone, pickupAddress)
+                rentalService.approveRequest(id, ownerId, null, null)
         );
     }
- // ---------------- REJECT RENTAL ----------------
+
+    // ================= REJECT RENTAL =================
+
     @PutMapping("/reject/{id}")
     public ResponseEntity<RentalRequest> rejectRental(
             @PathVariable String id,
             Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         Long ownerId = userId(authentication);
 
@@ -85,58 +88,83 @@ public ResponseEntity<?> borrow(
         );
     }
 
-   
-    // ---------------- RETURN REQUEST ----------------
+    // ================= RETURN REQUEST =================
+
     @PostMapping("/{id}/return")
     public ResponseEntity<RentalRequest> returnItem(
             @PathVariable String id,
             @RequestParam("image") MultipartFile image,
             Authentication authentication) {
 
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+
         return ResponseEntity.ok(
                 rentalService.requestReturn(id, userId(authentication), image)
         );
     }
 
-    // ---------------- APPROVE RETURN ----------------
+    // ================= APPROVE RETURN =================
+
     @PutMapping("/approve-return/{id}")
     public ResponseEntity<RentalRequest> approveReturn(
             @PathVariable String id,
             Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         return ResponseEntity.ok(
                 rentalService.approveReturn(id, userId(authentication))
         );
     }
 
-    // ---------------- OWNER DASHBOARD ----------------
+    // ================= OWNER DASHBOARD =================
+
     @GetMapping("/owner")
     public ResponseEntity<List<RentalRequest>> ownerRequests(Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         return ResponseEntity.ok(
                 rentalService.getRequestsForOwner(userId(authentication))
         );
     }
 
-    // ---------------- BORROWER DASHBOARD ----------------
+    // ================= BORROWER DASHBOARD =================
+
     @GetMapping("/me")
     public ResponseEntity<List<RentalRequest>> myRentals(Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         return ResponseEntity.ok(
                 rentalService.getRentalsForBorrower(userId(authentication))
         );
     }
 
-    // ---------------- OWNER RETURN REQUESTS ----------------
+    // ================= OWNER RETURN REQUESTS =================
+
     @GetMapping("/owner/returns")
     public ResponseEntity<List<RentalRequest>> pendingReturns(Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
 
         return ResponseEntity.ok(
                 rentalService.getPendingReturnsForOwner(userId(authentication))
         );
     }
 
-    // ---------------- RETURN IMAGE ----------------
+    // ================= RETURN IMAGE =================
+
     @GetMapping("/{id}/return-image")
     public ResponseEntity<Resource> getReturnImage(@PathVariable String id) throws Exception {
 
