@@ -51,10 +51,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Long userId = jwtUtil.extractUserId(token);
-        String role = jwtUtil.extractRole(token);
+       Long userId = jwtUtil.extractUserId(token);
+String role = jwtUtil.extractRole(token);
 
-      String authority = "ROLE_" + role.toUpperCase();
+System.out.println("ROLE FROM TOKEN: " + role);
+
+String authority = "ROLE_" + role;
+
+System.out.println("SPRING AUTHORITY: " + authority);
+
 
 
         UsernamePasswordAuthenticationToken authentication =
