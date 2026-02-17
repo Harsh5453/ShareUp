@@ -165,19 +165,18 @@ public class RentalController {
 
     // ================= RETURN IMAGE =================
 
-    @GetMapping("/{id}/return-image")
-    public ResponseEntity<Resource> getReturnImage(@PathVariable String id) throws Exception {
+   @GetMapping("/{id}/return-image")
+public ResponseEntity<?> getReturnImage(@PathVariable String id) {
 
-        Path filePath = rentalService.getReturnImagePath(id);
+    RentalRequest rental = rentalService.getById(id);
 
-        Resource resource = new UrlResource(filePath.toUri());
+    if (rental.getReturnImageUrl() == null) {
+        return ResponseEntity.notFound().build();
+    }
 
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+    return ResponseEntity
+            .status(302)
+            .header("Location", rental.getReturnImageUrl())
+            .build();
     }
 }
