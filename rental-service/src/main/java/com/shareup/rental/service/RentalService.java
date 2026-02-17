@@ -71,7 +71,53 @@ public class RentalService {
         return saved;
     }
 
-    // ================= RETURN REQUEST (Cloudinary Upload) =================
+    // ================= APPROVE REQUEST =================
+
+    public RentalRequest approveRequest(String rentalId,
+                                        Long ownerId,
+                                        String ownerPhone,
+                                        String ignoredPickupAddress) {
+
+        RentalRequest req = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (!ownerId.equals(req.getOwnerId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        ItemResponse item = restTemplate.getForObject(
+                itemServiceUrl + "/api/items/" + req.getItemId(),
+                ItemResponse.class
+        );
+
+        if (item == null) {
+            throw new RuntimeException("Item not found");
+        }
+
+        req.setPickupAddress(item.getPickupAddress());
+        req.setOwnerPhone(ownerPhone);
+        req.setStatus(RentalStatus.APPROVED);
+        req.setApprovedAt(LocalDateTime.now());
+
+        return rentalRepository.save(req);
+    }
+
+    // ================= REJECT REQUEST =================
+
+    public RentalRequest rejectRequest(String rentalId, Long ownerId) {
+
+        RentalRequest req = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (!ownerId.equals(req.getOwnerId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        req.setStatus(RentalStatus.REJECTED);
+        return rentalRepository.save(req);
+    }
+
+    // ================= RETURN REQUEST (Cloudinary) =================
 
     public RentalRequest requestReturn(String rentalId,
                                        Long borrowerId,
@@ -93,7 +139,24 @@ public class RentalService {
         return rentalRepository.save(req);
     }
 
-    // ================= CLOUDINARY UPLOAD =================
+    // ================= APPROVE RETURN =================
+
+    public RentalRequest approveReturn(String rentalId, Long ownerId) {
+
+        RentalRequest req = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
+
+        if (!ownerId.equals(req.getOwnerId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        req.setStatus(RentalStatus.RETURN_APPROVED);
+        req.setReturnApprovedAt(LocalDateTime.now());
+
+        return rentalRepository.save(req);
+    }
+
+    // ================= CLOUDINARY =================
 
     private String uploadToCloudinary(MultipartFile file) {
         try {
@@ -109,7 +172,7 @@ public class RentalService {
         }
     }
 
-    // ================= EMAIL HELPERS =================
+    // ================= EMAIL =================
 
     private void sendOwnerNewRequestEmail(RentalRequest req) {
         try {
@@ -142,6 +205,18 @@ public class RentalService {
 
     public List<RentalRequest> getRentalsForBorrower(Long borrowerId) {
         return rentalRepository.findByBorrowerId(borrowerId);
+    }
+
+    public List<RentalRequest> getPendingReturnsForOwner(Long ownerId) {
+        return rentalRepository.findByOwnerIdAndStatus(
+                ownerId,
+                RentalStatus.RETURN_REQUESTED
+        );
+    }
+
+    public RentalRequest getById(String id) {
+        return rentalRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rental not found"));
     }
 
     public List<Rating> getRatingsForUser(Long userId) {
