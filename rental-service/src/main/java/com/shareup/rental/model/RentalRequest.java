@@ -21,6 +21,7 @@ public class RentalRequest {
     private Long ownerId;
 
     // Contact info
+    private String borrowerEmail;   
     private String borrowerPhone;
     private String borrowerAddress;
 
