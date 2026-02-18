@@ -41,23 +41,26 @@ export default function ReturnApprovals() {
       <h1 className="text-2xl font-bold mb-4">Return Approvals</h1>
 
       {returns.map(r => {
-        const imageUrl = `${import.meta.env.VITE_RENTAL_API}/api/rentals/${r.id}/return-image`
+        //  use Cloudinary URL directly
+        const imageUrl = r.returnImageUrl
 
         return (
           <div key={r.id} className="border p-4 mb-3 rounded bg-white space-y-2">
             <p><b>Item:</b> {itemsMap[r.itemId] || r.itemId}</p>
             <p><b>Borrower:</b> {r.borrowerEmail}</p>
 
-            <img
-              src={imageUrl}
-              alt="Return proof"
-              className="w-48 rounded border"
-              onError={e => (e.target.style.display = 'none')}
-            />
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="Return proof"
+                className="w-48 rounded border"
+                onError={e => (e.currentTarget.style.display = 'none')}
+              />
+            )}
 
             <button
               onClick={() => approveReturn(r.id)}
-              className="bg-green-600 text-white px-3 py-1 rounded"
+              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition"
             >
               Approve Return
             </button>
