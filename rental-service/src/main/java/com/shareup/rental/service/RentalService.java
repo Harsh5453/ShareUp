@@ -46,19 +46,37 @@ public class RentalService {
         this.cloudinary = cloudinary;
     }
 
-    // ================= BORROW REQUEST =================
+    // ============================================================
+    // ================= BORROW REQUEST ===========================
+    // ============================================================
 
     public RentalRequest createBorrowRequest(Long borrowerId,
-                                             String borrowerPhone,
-                                             String borrowerAddress,
+                                             String ignoredPhone,
+                                             String ignoredAddress,
                                              BorrowRequestDTO dto) {
+
+        // 🔥 Fetch borrower details from auth-service
+        Map user = null;
+        try {
+            user = restTemplate.getForObject(
+                    authServiceUrl + "/api/users/" + borrowerId,
+                    Map.class
+            );
+        } catch (Exception e) {
+            System.out.println("Auth service failed: " + e.getMessage());
+        }
 
         RentalRequest request = new RentalRequest();
         request.setItemId(dto.getItemId());
         request.setOwnerId(dto.getOwnerId());
         request.setBorrowerId(borrowerId);
-        request.setBorrowerPhone(borrowerPhone);
-        request.setBorrowerAddress(borrowerAddress);
+
+        if (user != null) {
+            request.setBorrowerEmail((String) user.get("email"));
+            request.setBorrowerPhone((String) user.get("phone"));
+            request.setBorrowerAddress((String) user.get("address"));
+        }
+
         request.setStatus(RentalStatus.PENDING);
         request.setCreatedAt(LocalDateTime.now());
 
@@ -71,11 +89,13 @@ public class RentalService {
         return saved;
     }
 
-    // ================= APPROVE REQUEST =================
+    // ============================================================
+    // ================= APPROVE REQUEST ==========================
+    // ============================================================
 
     public RentalRequest approveRequest(String rentalId,
                                         Long ownerId,
-                                        String ownerPhone,
+                                        String ignoredPhone,
                                         String ignoredPickupAddress) {
 
         RentalRequest req = rentalRepository.findById(rentalId)
@@ -85,24 +105,45 @@ public class RentalService {
             throw new RuntimeException("Unauthorized");
         }
 
-        ItemResponse item = restTemplate.getForObject(
-                itemServiceUrl + "/api/items/" + req.getItemId(),
-                ItemResponse.class
-        );
-
-        if (item == null) {
-            throw new RuntimeException("Item not found");
+        // Fetch item details
+        ItemResponse item = null;
+        try {
+            item = restTemplate.getForObject(
+                    itemServiceUrl + "/api/items/" + req.getItemId(),
+                    ItemResponse.class
+            );
+        } catch (Exception e) {
+            System.out.println("Item service failed: " + e.getMessage());
         }
 
-        req.setPickupAddress(item.getPickupAddress());
-        req.setOwnerPhone(ownerPhone);
+        // Fetch owner details
+        Map owner = null;
+        try {
+            owner = restTemplate.getForObject(
+                    authServiceUrl + "/api/users/" + ownerId,
+                    Map.class
+            );
+        } catch (Exception e) {
+            System.out.println("Auth service failed: " + e.getMessage());
+        }
+
+        if (item != null) {
+            req.setPickupAddress(item.getPickupAddress());
+        }
+
+        if (owner != null) {
+            req.setOwnerPhone((String) owner.get("phone"));
+        }
+
         req.setStatus(RentalStatus.APPROVED);
         req.setApprovedAt(LocalDateTime.now());
 
         return rentalRepository.save(req);
     }
 
-    // ================= REJECT REQUEST =================
+    // ============================================================
+    // ================= REJECT REQUEST ===========================
+    // ============================================================
 
     public RentalRequest rejectRequest(String rentalId, Long ownerId) {
 
@@ -117,7 +158,9 @@ public class RentalService {
         return rentalRepository.save(req);
     }
 
-    // ================= RETURN REQUEST (Cloudinary) =================
+    // ============================================================
+    // ================= RETURN REQUEST ===========================
+    // ============================================================
 
     public RentalRequest requestReturn(String rentalId,
                                        Long borrowerId,
@@ -139,7 +182,9 @@ public class RentalService {
         return rentalRepository.save(req);
     }
 
-    // ================= APPROVE RETURN =================
+    // ============================================================
+    // ================= APPROVE RETURN ===========================
+    // ============================================================
 
     public RentalRequest approveReturn(String rentalId, Long ownerId) {
 
@@ -156,7 +201,9 @@ public class RentalService {
         return rentalRepository.save(req);
     }
 
-    // ================= CLOUDINARY =================
+    // ============================================================
+    // ================= CLOUDINARY UPLOAD ========================
+    // ============================================================
 
     private String uploadToCloudinary(MultipartFile file) {
         try {
@@ -172,7 +219,9 @@ public class RentalService {
         }
     }
 
-    // ================= EMAIL =================
+    // ============================================================
+    // ================= EMAIL ===================================
+    // ============================================================
 
     private void sendOwnerNewRequestEmail(RentalRequest req) {
         try {
@@ -197,7 +246,9 @@ public class RentalService {
         } catch (Exception ignored) {}
     }
 
-    // ================= DASHBOARD =================
+    // ============================================================
+    // ================= DASHBOARD ================================
+    // ============================================================
 
     public List<RentalRequest> getRequestsForOwner(Long ownerId) {
         return rentalRepository.findByOwnerId(ownerId);
@@ -222,4 +273,4 @@ public class RentalService {
     public List<Rating> getRatingsForUser(Long userId) {
         return ratingRepository.findByToUserId(userId.toString());
     }
-}
+                }
