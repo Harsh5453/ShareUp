@@ -16,7 +16,7 @@ export default function RentalRequests() {
       const list = Array.isArray(res.data) ? res.data : []
       setRequests(list)
 
-      // load item details
+      // Load item details
       const map = {}
       for (const r of list) {
         if (!map[r.itemId]) {
@@ -25,6 +25,7 @@ export default function RentalRequests() {
         }
       }
       setItems(map)
+
     } catch (err) {
       console.error(err)
       toast.error('Failed to load requests')
@@ -41,6 +42,7 @@ export default function RentalRequests() {
     setRequests(prev =>
       prev.map(r => (r.id === id ? { ...r, status: 'APPROVED' } : r))
     )
+
     try {
       await rentalsApi.approve(id)
       toast.success('Request approved')
@@ -54,6 +56,7 @@ export default function RentalRequests() {
     setRequests(prev =>
       prev.map(r => (r.id === id ? { ...r, status: 'REJECTED' } : r))
     )
+
     try {
       await rentalsApi.reject(id)
       toast.success('Request rejected')
@@ -74,14 +77,18 @@ export default function RentalRequests() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {requests.map(r => {
           const item = items[r.itemId]
-          const imageUrl = item?.imageUrl
-            ? `${import.meta.env.VITE_ITEM_API}/api/images/${item.imageUrl.replace(/^.*[\\/]/, '')}`
-            : '/placeholder.png'
+
+          //  FOR CLOUDINARY
+          const imageUrl = item?.imageUrl || '/placeholder.png'
 
           return (
-            <div key={r.id} className="bg-white rounded-xl shadow-md p-5 space-y-3 border">
+            <div
+              key={r.id}
+              className="bg-white rounded-xl shadow-md p-5 space-y-3 border"
+            >
               <img
                 src={imageUrl}
+                alt={item?.name || 'Item'}
                 className="h-40 w-full object-cover rounded"
                 onError={e => (e.currentTarget.src = '/placeholder.png')}
               />
@@ -94,20 +101,21 @@ export default function RentalRequests() {
               </div>
 
               <p className="text-sm text-gray-500">
-                Borrower: <b>{r.borrowerEmail}</b>
+                Borrower: <b>{r.borrowerEmail || 'N/A'}</b>
               </p>
 
               {r.status === 'PENDING' && (
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => approve(r.id)}
-                    className="flex-1 bg-green-600 text-white py-2 rounded"
+                    className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
                   >
                     Approve
                   </button>
+
                   <button
                     onClick={() => reject(r.id)}
-                    className="flex-1 bg-red-600 text-white py-2 rounded"
+                    className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
                   >
                     Reject
                   </button>
@@ -119,4 +127,4 @@ export default function RentalRequests() {
       </div>
     </div>
   )
-}
+        }
