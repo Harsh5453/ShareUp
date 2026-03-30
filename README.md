@@ -48,7 +48,6 @@
 - 📦 **Item Management** — Owners can list items with images (Cloudinary), categories, pricing, and pickup address
 - 🔍 **Browse & Filter** — Borrowers can browse and filter available items by category
 - 📋 **Full Rental Lifecycle** — Request → Approve/Reject → Return (with image proof) → Return Approval
-- ⭐ **Ratings System** — Borrowers can rate owners (1–10 stars with review) after a completed rental
 - 📧 **Email Notifications** — Gmail SMTP integration for rental status updates
 - 🖼️ **Image Uploads** — Item images and return proof images via Cloudinary
 - 🛡️ **Structured Exception Handling** — Clean error responses across all services
