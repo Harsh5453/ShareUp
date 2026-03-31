@@ -138,7 +138,20 @@ public class RentalService {
         req.setStatus(RentalStatus.APPROVED);
         req.setApprovedAt(LocalDateTime.now());
 
-        return rentalRepository.save(req);
+        RentalRequest approved = rentalRepository.save(req);
+
+        // ✅ Auto-reject all other PENDING requests for the same item
+        List<RentalRequest> otherPending = rentalRepository
+                .findByItemIdAndStatus(req.getItemId(), RentalStatus.PENDING);
+
+        for (RentalRequest other : otherPending) {
+            if (!other.getId().equals(approved.getId())) {
+                other.setStatus(RentalStatus.REJECTED);
+                rentalRepository.save(other);
+            }
+        }
+
+        return approved;
     }
 
     // ============================================================
