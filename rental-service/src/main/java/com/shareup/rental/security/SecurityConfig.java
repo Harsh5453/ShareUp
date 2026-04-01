@@ -38,9 +38,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 // Allow CORS preflight
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 .requestMatchers("/api/rentals/health").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+               
                 // BORROWER APIs
                 .requestMatchers(HttpMethod.POST, "/api/rentals/request")
                     .hasAuthority("ROLE_BORROWER")
