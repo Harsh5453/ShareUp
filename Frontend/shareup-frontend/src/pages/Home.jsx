@@ -38,9 +38,10 @@ export default function Home() {
     load()
   }, [])
 
+  // ✅ Fixed: filter works on both search AND category
   const filtered = items.filter(i => {
-    const matchSearch = i.name?.toLowerCase().includes(search.toLowerCase())
-    const matchCat = category === 'All' || i.category === category
+    const matchSearch = !search || i.name?.toLowerCase().includes(search.toLowerCase())
+    const matchCat = category === 'All' || i.category?.toLowerCase() === category.toLowerCase()
     return matchSearch && matchCat
   })
 
@@ -97,39 +98,44 @@ export default function Home() {
           color: #f97316;
           font-size: 0.75rem;
           font-weight: 600;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.06em;
           text-transform: uppercase;
-          padding: 5px 12px;
+          padding: 5px 14px;
           border-radius: 20px;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
         }
         .hero-badge::before {
           content: '';
           width: 6px; height: 6px;
           border-radius: 50%;
           background: #f97316;
-          animation: pulse 2s infinite;
+          animation: blink 2s infinite;
+          flex-shrink: 0;
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+        @keyframes blink {
+          0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
         }
+
+        /* ✅ Fixed: letter-spacing was too tight, now readable */
         .hero-title {
           font-family: 'Syne', sans-serif;
-          font-size: clamp(2.4rem, 5vw, 4rem);
+          font-size: clamp(2.6rem, 5.5vw, 4.2rem);
           font-weight: 900;
           color: white;
-          line-height: 1.05;
-          letter-spacing: -1.5px;
+          line-height: 1.1;
+          letter-spacing: -0.5px;
           margin-bottom: 20px;
         }
         .hero-title span { color: #e85d26; }
+
         .hero-subtitle {
           font-size: 1rem;
           color: #6b7280;
-          line-height: 1.7;
-          max-width: 500px;
+          line-height: 1.75;
+          max-width: 480px;
           margin-bottom: 36px;
-          font-weight: 300;
+          font-weight: 400;
+          letter-spacing: 0.01em;
         }
         .hero-cta-group { display: flex; gap: 12px; flex-wrap: wrap; }
         .btn-primary {
@@ -138,33 +144,38 @@ export default function Home() {
           border: none;
           padding: 14px 28px;
           border-radius: 10px;
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           font-weight: 600;
           font-family: 'DM Sans', sans-serif;
           cursor: pointer;
           transition: all 0.2s;
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
         }
-        .btn-primary:hover { background: #d44d1a; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,93,38,0.35); }
+        .btn-primary:hover {
+          background: #d44d1a;
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px rgba(232,93,38,0.35);
+        }
         .btn-secondary {
           background: rgba(255,255,255,0.07);
           color: #e5e7eb;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.15);
           padding: 14px 28px;
           border-radius: 10px;
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           font-weight: 500;
           font-family: 'DM Sans', sans-serif;
           cursor: pointer;
           transition: all 0.2s;
+          letter-spacing: 0.02em;
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.13); }
 
-        /* STATS ROW */
+        /* STATS */
         .stats-row {
           background: #0f1117;
-          border-top: 1px solid rgba(255,255,255,0.06);
-          padding: 28px 0;
+          border-top: 1px solid rgba(255,255,255,0.07);
+          padding: 32px 0;
         }
         .stats-inner {
           max-width: 1100px;
@@ -172,22 +183,27 @@ export default function Home() {
           padding: 0 32px;
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 0;
         }
         .stat-item {
           text-align: center;
-          padding: 0 20px;
-          border-right: 1px solid rgba(255,255,255,0.06);
+          padding: 0 24px;
+          border-right: 1px solid rgba(255,255,255,0.07);
         }
         .stat-item:last-child { border-right: none; }
         .stat-value {
           font-family: 'Syne', sans-serif;
-          font-size: 1.8rem;
+          font-size: 2rem;
           font-weight: 800;
           color: white;
           letter-spacing: -1px;
         }
-        .stat-label { font-size: 0.78rem; color: #6b7280; font-weight: 400; margin-top: 2px; }
+        .stat-label {
+          font-size: 0.8rem;
+          color: #6b7280;
+          font-weight: 400;
+          margin-top: 4px;
+          letter-spacing: 0.02em;
+        }
 
         /* FEATURES */
         .features-section {
@@ -199,45 +215,37 @@ export default function Home() {
           font-size: 0.72rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.14em;
           color: #e85d26;
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
         .section-title {
           font-family: 'Syne', sans-serif;
           font-size: 2rem;
           font-weight: 800;
           color: #111;
-          letter-spacing: -0.5px;
-          margin-bottom: 40px;
+          letter-spacing: -0.3px;
+          margin-bottom: 36px;
         }
         .features-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
           gap: 16px;
         }
         .feature-card {
           background: white;
           border: 1px solid #f0ede8;
           border-radius: 16px;
-          padding: 24px;
+          padding: 26px;
           transition: all 0.25s;
-          position: relative;
-          overflow: hidden;
         }
-        .feature-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 16px;
-          background: linear-gradient(135deg, rgba(232,93,38,0.03), transparent);
-          opacity: 0;
-          transition: opacity 0.25s;
+        .feature-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.07);
+          border-color: #e8d5c8;
         }
-        .feature-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); border-color: #e8d5c8; }
-        .feature-card:hover::before { opacity: 1; }
         .feature-icon {
-          width: 44px; height: 44px;
+          width: 46px; height: 46px;
           border-radius: 12px;
           background: #fef3ec;
           display: flex; align-items: center; justify-content: center;
@@ -250,10 +258,16 @@ export default function Home() {
           font-weight: 700;
           color: #111;
           margin-bottom: 6px;
+          letter-spacing: -0.2px;
         }
-        .feature-desc { font-size: 0.83rem; color: #6b7280; line-height: 1.6; }
+        .feature-desc {
+          font-size: 0.84rem;
+          color: #6b7280;
+          line-height: 1.65;
+          letter-spacing: 0.01em;
+        }
 
-        /* BROWSE SECTION */
+        /* BROWSE */
         .browse-section {
           max-width: 1100px;
           margin: 0 auto;
@@ -267,7 +281,7 @@ export default function Home() {
           border: 1.5px solid #e5e0d8;
           border-radius: 12px;
           padding: 4px 4px 4px 16px;
-          margin-bottom: 20px;
+          margin-bottom: 18px;
           transition: border-color 0.2s;
           box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
@@ -276,27 +290,29 @@ export default function Home() {
           flex: 1;
           border: none;
           outline: none;
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           color: #111;
           background: transparent;
           font-family: 'DM Sans', sans-serif;
+          letter-spacing: 0.01em;
         }
-        .search-bar input::placeholder { color: #9ca3af; }
+        .search-bar input::placeholder { color: #b0a99f; }
         .search-btn {
           background: #111;
           color: white;
           border: none;
-          padding: 10px 20px;
+          padding: 11px 22px;
           border-radius: 9px;
-          font-size: 0.85rem;
+          font-size: 0.875rem;
           font-weight: 600;
           font-family: 'DM Sans', sans-serif;
           cursor: pointer;
           transition: background 0.2s;
+          letter-spacing: 0.02em;
         }
         .search-btn:hover { background: #e85d26; }
 
-        /* Category pills */
+        /* ✅ Category pills */
         .category-pills {
           display: flex;
           gap: 8px;
@@ -304,9 +320,9 @@ export default function Home() {
           margin-bottom: 32px;
         }
         .pill {
-          padding: 6px 16px;
+          padding: 7px 18px;
           border-radius: 20px;
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           font-weight: 500;
           font-family: 'DM Sans', sans-serif;
           cursor: pointer;
@@ -314,11 +330,16 @@ export default function Home() {
           background: white;
           color: #6b7280;
           transition: all 0.18s;
+          letter-spacing: 0.01em;
         }
         .pill:hover { border-color: #e85d26; color: #e85d26; }
-        .pill.active { background: #e85d26; border-color: #e85d26; color: white; }
+        .pill.active {
+          background: #e85d26;
+          border-color: #e85d26;
+          color: white;
+          font-weight: 600;
+        }
 
-        /* Items grid */
         .items-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -329,23 +350,22 @@ export default function Home() {
           padding: 64px 0;
           color: #9ca3af;
         }
-        .empty-icon {
-          font-size: 3rem;
-          margin-bottom: 12px;
+        .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .empty-text {
+          font-size: 1rem;
+          letter-spacing: 0.01em;
         }
-        .empty-text { font-size: 1rem; }
 
         @media (max-width: 640px) {
           .stats-inner { grid-template-columns: repeat(2, 1fr); }
-          .stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px; }
-          .stat-item:nth-child(even) { border-right: none; }
-          .hero-title { font-size: 2rem; }
+          .stat-item { border-right: none; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+          .hero-title { font-size: 2.2rem; letter-spacing: -0.3px; }
         }
       `}</style>
 
       <div className="home-root">
 
-        {/* ── HERO ── */}
+        {/* HERO */}
         <section className="hero">
           <div className="hero-inner">
             <div className="hero-badge">India's Peer-to-Peer Rental Platform</div>
@@ -354,8 +374,7 @@ export default function Home() {
               from <span>people nearby.</span>
             </h1>
             <p className="hero-subtitle">
-              Tools, electronics, camping gear & more.
-              Save money, reduce waste — rent smarter with ShareUp.
+              Tools, electronics, camping gear & more. Save money, reduce waste — rent smarter with ShareUp.
             </p>
             <div className="hero-cta-group">
               <button className="btn-primary" onClick={() => navigate('/register')}>
@@ -368,7 +387,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── STATS ── */}
+        {/* STATS */}
         <section className="stats-row">
           <div className="stats-inner">
             {stats.map(s => (
@@ -380,14 +399,14 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── FEATURES ── */}
+        {/* FEATURES */}
         <section className="features-section">
           <div className="section-label">Why ShareUp</div>
           <div className="section-title">Everything you need to rent smarter</div>
           <div className="features-grid">
             {[
               ['💸', 'Save Money',     'Rent instead of buying expensive items you rarely use.'],
-              ['🛡️', 'Trusted Owners',  'Verified profiles and ratings ensure safe transactions.'],
+              ['🛡️', 'Trusted Owners', 'Verified profiles and ratings ensure safe transactions.'],
               ['⚡', 'Fast Approval',  'Owners respond quickly — often within hours.'],
               ['🔁', 'Easy Returns',   'Image-proof return flow keeps everyone accountable.'],
             ].map(([icon, title, desc]) => (
@@ -400,15 +419,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── BROWSE ── */}
+        {/* BROWSE */}
         <section className="browse-section">
           <div className="section-label">Available Now</div>
           <div className="section-title">Browse items near you</div>
 
-          {/* Search bar */}
+          {/* Search */}
           <div className="search-bar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b0a99f" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input
               placeholder="Search for tools, electronics, furniture..."
@@ -418,24 +437,35 @@ export default function Home() {
             <button className="search-btn">Search</button>
           </div>
 
-          {/* Category pills */}
+          {/* ✅ Category pills — now actually filter items */}
           <div className="category-pills">
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
                 className={`pill ${category === cat ? 'active' : ''}`}
-                onClick={() => { setCategory(cat); setPage(1) }}
+                onClick={() => {
+                  setCategory(cat)
+                  setPage(1)
+                }}
               >
                 {cat}
               </button>
             ))}
           </div>
 
-          {/* Items */}
+          {/* Results count */}
+          {category !== 'All' || search ? (
+            <p style={{ fontSize: '0.83rem', color: '#9ca3af', marginBottom: 20, letterSpacing: '0.01em' }}>
+              {filtered.length} item{filtered.length !== 1 ? 's' : ''} found
+              {category !== 'All' ? ` in "${category}"` : ''}
+              {search ? ` for "${search}"` : ''}
+            </p>
+          ) : null}
+
           {paginated.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">📦</div>
-              <div className="empty-text">No items found. Try a different search.</div>
+              <div className="empty-text">No items found. Try a different search or category.</div>
             </div>
           ) : (
             <div className="items-grid">
