@@ -69,4 +69,11 @@ public class ItemController {
 
         return itemService.getItemsByOwner(ownerId);
     }
+    
+     
+    // ====== Health Endpoint ==============
+    @GetMapping("/health")
+    public String health() {
+    return "OK";
+}
 }
