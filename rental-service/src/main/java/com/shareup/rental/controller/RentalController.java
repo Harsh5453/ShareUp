@@ -179,4 +179,9 @@ public ResponseEntity<?> getReturnImage(@PathVariable String id) {
             .header("Location", rental.getReturnImageUrl())
             .build();
     }
+    // ====== Health Endpoint ==============
+    @GetMapping("/health")
+    public String health() {
+    return "OK";
+}
 }
