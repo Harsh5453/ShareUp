@@ -36,6 +36,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Skip JWT check for health endpoint
+        String path = request.getRequestURI();
+        if (path.equals("/api/rentals/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
@@ -51,16 +58,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-       Long userId = jwtUtil.extractUserId(token);
-String role = jwtUtil.extractRole(token);
+        Long userId = jwtUtil.extractUserId(token);
+        String role = jwtUtil.extractRole(token);
 
-System.out.println("ROLE FROM TOKEN: " + role);
+        System.out.println("ROLE FROM TOKEN: " + role);
 
-String authority = "ROLE_" + role;
+        String authority = "ROLE_" + role;
 
-System.out.println("SPRING AUTHORITY: " + authority);
-
-
+        System.out.println("SPRING AUTHORITY: " + authority);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
