@@ -38,7 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         // Skip JWT check for health endpoint
         String path = request.getRequestURI();
-        if (path.equals("/api/rentals/health")) {
+        if (path.equals("/health")) {
             filterChain.doFilter(request, response);
             return;
         }
