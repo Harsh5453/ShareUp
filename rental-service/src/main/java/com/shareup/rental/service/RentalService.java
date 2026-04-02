@@ -121,6 +121,18 @@ public class RentalService {
         req.setApprovedAt(LocalDateTime.now());
 
         RentalRequest approved = rentalRepository.save(req);
+        // Update item status to RENTED
+        try {
+            restTemplate.postForObject(
+            itemServiceUrl + "/api/items/" + req.getItemId() + "/rented",
+            null,
+            Void.class
+            );
+        } 
+        catch (Exception e) {
+            log.warn("Failed to update item status to RENTED for itemId={}", req.getItemId());
+        }
+
         log.info("Rental approved id={} ownerId={}", rentalId, ownerId);
 
         // Auto-reject all other PENDING requests for this item
@@ -241,7 +253,21 @@ public class RentalService {
         req.setReturnApprovedAt(LocalDateTime.now());
 
         log.info("Return approved id={} ownerId={}", rentalId, ownerId);
-        return rentalRepository.save(req);
+        RentalRequest saved = rentalRepository.save(req);
+
+        // Update item status back to AVAILABLE
+        try {
+             restTemplate.postForObject(
+            itemServiceUrl + "/api/items/" + req.getItemId() + "/available",
+            null,
+            Void.class
+            );
+        } 
+        catch(Exception e) {
+             log.warn("Failed to update item status to AVAILABLE for itemId={}", req.getItemId());
+        }
+
+return saved;
     }
 
     // ============================================================
