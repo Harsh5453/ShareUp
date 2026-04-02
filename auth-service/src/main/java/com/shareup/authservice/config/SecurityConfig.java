@@ -37,7 +37,8 @@ public class SecurityConfig {
                         "/api/auth/health"
                 ).permitAll()
                 .requestMatchers("/api/profile/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                   // Internal service-to-service calls only — NOT public
+                .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

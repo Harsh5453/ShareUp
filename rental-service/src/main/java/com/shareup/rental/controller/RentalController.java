@@ -4,19 +4,18 @@ import com.shareup.rental.dto.BorrowRequestDTO;
 import com.shareup.rental.model.RentalRequest;
 import com.shareup.rental.service.RentalService;
 
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/rentals")
+@Validated
 public class RentalController {
 
     private final RentalService rentalService;
@@ -121,6 +120,22 @@ public class RentalController {
         );
     }
 
+    // ================= CANCEL RENTAL (borrower) ===============
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<RentalRequest> cancelRental(
+            @PathVariable String id,
+            Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(
+                rentalService.cancelRequest(id, userId(authentication))
+        );
+    }
+
     // ================= OWNER DASHBOARD =================
 
     @GetMapping("/owner")
@@ -179,9 +194,4 @@ public ResponseEntity<?> getReturnImage(@PathVariable String id) {
             .header("Location", rental.getReturnImageUrl())
             .build();
     }
-    // ====== Health Endpoint ==============
-    @GetMapping("/health")
-    public String health() {
-    return "OK";
-}
 }
