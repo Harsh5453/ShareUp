@@ -123,11 +123,10 @@ public class RentalService {
         RentalRequest approved = rentalRepository.save(req);
         // Update item status to RENTED
         try {
-            restTemplate.postForObject(
+            restTemplate.put(
             itemServiceUrl + "/api/items/" + req.getItemId() + "/rented",
-            null,
-            Void.class
-            );
+            null
+        );
         } 
         catch (Exception e) {
             log.warn("Failed to update item status to RENTED for itemId={}", req.getItemId());
@@ -257,10 +256,9 @@ public class RentalService {
 
         // Update item status back to AVAILABLE
         try {
-             restTemplate.postForObject(
+            restTemplate.put(
             itemServiceUrl + "/api/items/" + req.getItemId() + "/available",
-            null,
-            Void.class
+            null
             );
         } 
         catch(Exception e) {
