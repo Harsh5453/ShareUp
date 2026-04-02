@@ -51,7 +51,7 @@ public class ItemController {
     }
 
     // Rental-service calls
-    @PutMapping("/{id}/rent")
+    @PutMapping("/{id}/rented")
     public Item markRented(@PathVariable String id) {
         return itemService.setItemRented(id);
     }
