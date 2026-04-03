@@ -19,12 +19,13 @@ public class UserController {
     public UserEmailResponse getUserById(@PathVariable Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
 
         UserEmailResponse res = new UserEmailResponse();
         res.setId(user.getId());
         res.setEmail(user.getEmail());
         res.setName(user.getName());
+        res.setPhone(user.getPhone());  
 
         return res;
     }
