@@ -44,19 +44,23 @@ public class RentalService {
                          RestTemplate restTemplate,
                          Cloudinary cloudinary) {
         this.rentalRepository = rentalRepository;
-        this.emailService = emailService;
+        this.emailService     = emailService;
         this.ratingRepository = ratingRepository;
-        this.restTemplate = restTemplate;
-        this.cloudinary = cloudinary;
+        this.restTemplate     = restTemplate;
+        this.cloudinary       = cloudinary;
     }
 
     // ============================================================
     // ================= BORROW REQUEST ===========================
     // ============================================================
 
+    /**
+     * borrowerEmail and borrowerPhone come directly from the JWT (via RentalController)
+     * — no call to auth-service needed for borrower info.
+     */
     public RentalRequest createBorrowRequest(Long borrowerId,
-                                             String ignoredPhone,
-                                             String ignoredAddress,
+                                             String borrowerEmail,
+                                             String borrowerPhone,
                                              BorrowRequestDTO dto) {
 
         // Validate dates
@@ -65,8 +69,6 @@ public class RentalService {
             throw new RuntimeException("endDate must be after startDate");
         }
 
-        Map user = fetchUser(borrowerId);
-
         RentalRequest request = new RentalRequest();
         request.setItemId(dto.getItemId());
         request.setOwnerId(dto.getOwnerId());
@@ -74,11 +76,9 @@ public class RentalService {
         request.setStartDate(dto.getStartDate());
         request.setEndDate(dto.getEndDate());
 
-        if (user != null) {
-            request.setBorrowerEmail((String) user.get("email"));
-            request.setBorrowerPhone((String) user.get("phone"));
-            request.setBorrowerAddress((String) user.get("address"));
-        }
+        // ✅ Set directly from JWT — reliable, no network call
+        request.setBorrowerEmail(borrowerEmail);
+        request.setBorrowerPhone(borrowerPhone);
 
         request.setStatus(RentalStatus.PENDING);
         request.setCreatedAt(LocalDateTime.now());
@@ -86,6 +86,7 @@ public class RentalService {
         RentalRequest saved = rentalRepository.save(request);
         log.info("Borrow request created id={} itemId={} borrowerId={}", saved.getId(), dto.getItemId(), borrowerId);
 
+        // Notify owner
         try {
             sendOwnerNewRequestEmail(saved);
         } catch (Exception e) {
@@ -111,30 +112,22 @@ public class RentalService {
             throw new RuntimeException("Unauthorized");
         }
 
+        // Fetch item to get pickupAddress
         ItemResponse item = fetchItem(req.getItemId());
+
+        // Fetch owner phone from auth-service
         Map owner = fetchUser(ownerId);
 
-        if (item != null)  req.setPickupAddress(item.getPickupAddress());
+        if (item  != null) req.setPickupAddress(item.getPickupAddress());
         if (owner != null) req.setOwnerPhone((String) owner.get("phone"));
 
         req.setStatus(RentalStatus.APPROVED);
         req.setApprovedAt(LocalDateTime.now());
 
         RentalRequest approved = rentalRepository.save(req);
-        // Update item status to RENTED
-        try {
-            restTemplate.put(
-            itemServiceUrl + "/api/items/" + req.getItemId() + "/rented",
-            null
-        );
-        } 
-        catch (Exception e) {
-            log.warn("Failed to update item status to RENTED for itemId={}", req.getItemId());
-        }
-
         log.info("Rental approved id={} ownerId={}", rentalId, ownerId);
 
-        // Auto-reject all other PENDING requests for this item
+        // Auto-reject all other PENDING requests for the same item
         List<RentalRequest> otherPending = rentalRepository
                 .findByItemIdAndStatus(req.getItemId(), RentalStatus.PENDING);
 
@@ -142,7 +135,7 @@ public class RentalService {
             if (!other.getId().equals(approved.getId())) {
                 other.setStatus(RentalStatus.REJECTED);
                 rentalRepository.save(other);
-                log.info("Auto-rejected competing request id={} for itemId={}", other.getId(), req.getItemId());
+                log.info("Auto-rejected competing request id={} itemId={}", other.getId(), req.getItemId());
             }
         }
 
@@ -173,7 +166,6 @@ public class RentalService {
         RentalRequest rejected = rentalRepository.save(req);
         log.info("Rental rejected id={} ownerId={}", rentalId, ownerId);
 
-        // Email borrower — rejected
         try {
             sendBorrowerRejectedEmail(rejected);
         } catch (Exception e) {
@@ -184,7 +176,7 @@ public class RentalService {
     }
 
     // ============================================================
-    // ================= CANCEL REQUEST (borrower) ================
+    // ================= CANCEL (borrower) ========================
     // ============================================================
 
     public RentalRequest cancelRequest(String rentalId, Long borrowerId) {
@@ -252,20 +244,7 @@ public class RentalService {
         req.setReturnApprovedAt(LocalDateTime.now());
 
         log.info("Return approved id={} ownerId={}", rentalId, ownerId);
-        RentalRequest saved = rentalRepository.save(req);
-
-        // Update item status back to AVAILABLE
-        try {
-            restTemplate.put(
-            itemServiceUrl + "/api/items/" + req.getItemId() + "/available",
-            null
-            );
-        } 
-        catch(Exception e) {
-             log.warn("Failed to update item status to AVAILABLE for itemId={}", req.getItemId());
-        }
-
-return saved;
+        return rentalRepository.save(req);
     }
 
     // ============================================================
@@ -314,7 +293,7 @@ return saved;
     // ============================================================
 
     private void sendOwnerNewRequestEmail(RentalRequest req) {
-        Map owner = fetchUser(req.getOwnerId());
+        Map owner         = fetchUser(req.getOwnerId());
         ItemResponse item = fetchItem(req.getItemId());
         if (owner == null || item == null) return;
 
@@ -322,12 +301,14 @@ return saved;
             "Hi,\n\nYou have a new rental request on ShareUp!\n\n" +
             "Item     : %s\n" +
             "Borrower : %s\n" +
+            "Phone    : %s\n" +
             "Dates    : %s to %s\n\n" +
             "Please log in to approve or reject this request.",
             item.getName(),
             req.getBorrowerEmail() != null ? req.getBorrowerEmail() : "—",
-            req.getStartDate() != null ? req.getStartDate() : "—",
-            req.getEndDate()   != null ? req.getEndDate()   : "—"
+            req.getBorrowerPhone() != null ? req.getBorrowerPhone() : "—",
+            req.getStartDate()     != null ? req.getStartDate()     : "—",
+            req.getEndDate()       != null ? req.getEndDate()       : "—"
         );
 
         emailService.sendEmail((String) owner.get("email"), "New Rental Request — ShareUp", body);
@@ -345,8 +326,8 @@ return saved;
             "Owner Phone    : %s\n\n" +
             "Please coordinate with the owner for pickup.",
             itemName,
-            req.getStartDate() != null ? req.getStartDate() : "—",
-            req.getEndDate()   != null ? req.getEndDate()   : "—",
+            req.getStartDate()     != null ? req.getStartDate()     : "—",
+            req.getEndDate()       != null ? req.getEndDate()       : "—",
             req.getPickupAddress() != null ? req.getPickupAddress() : "—",
             req.getOwnerPhone()    != null ? req.getOwnerPhone()    : "—"
         );
