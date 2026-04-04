@@ -1,6 +1,6 @@
 package com.shareup.rental.dto;
 
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -21,7 +21,7 @@ public class BorrowRequestDTO {
     private Long ownerId;
 
     @NotNull(message = "startDate is required")
-    @Future(message = "startDate must be in the future")
+    @FutureOrPresent(message = "startDate must be in the future or present")
     private LocalDate startDate;
 
     @NotNull(message = "endDate is required")
