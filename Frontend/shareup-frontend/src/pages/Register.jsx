@@ -41,7 +41,8 @@ export default function Register() {
 
         <input {...register('phone')} placeholder="Phone number" className="border p-2 w-full rounded" />
 
-        {/* <input {...register('pickupAddress')} placeholder="Pickup Address (for owners)" className="border p-2 w-full rounded" /> */}
+       
+        <input {...register('address')} placeholder="Address" className="border p-2 w-full rounded" />
 
         <select {...register('role')} className="border p-2 w-full rounded">
           <option value="BORROWER">Borrower</option>

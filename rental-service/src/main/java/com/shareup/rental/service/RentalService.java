@@ -29,8 +29,8 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final EmailService emailService;
     private final RatingRepository ratingRepository;
-    private final RestTemplate restTemplate;
     private final Cloudinary cloudinary;
+    private final RestTemplate restTemplate;
 
     @Value("${auth.service.url}")
     private String authServiceUrl;
@@ -74,9 +74,7 @@ public class RentalService {
         request.setOwnerId(dto.getOwnerId());
         request.setBorrowerId(borrowerId);
         request.setStartDate(dto.getStartDate());
-        request.setEndDate(dto.getEndDate());
-
-        // ✅ Set directly from JWT — reliable, no network call
+        request.setEndDate(dto.getEndDate()); 
         request.setBorrowerEmail(borrowerEmail);
         request.setBorrowerPhone(borrowerPhone);
 
@@ -100,55 +98,59 @@ public class RentalService {
     // ================= APPROVE REQUEST ==========================
     // ============================================================
 
-    public RentalRequest approveRequest(String rentalId,
-                                        Long ownerId,
-                                        String ignoredPhone,
-                                        String ignoredPickupAddress) {
+   public RentalRequest approveRequest(String rentalId,
+                                    Long ownerId,
+                                    String ignoredPhone,
+                                    String ignoredPickupAddress) {
 
-        RentalRequest req = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
+    RentalRequest req = rentalRepository.findById(rentalId)
+            .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
 
-        if (!ownerId.equals(req.getOwnerId())) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        // Fetch item to get pickupAddress
-        ItemResponse item = fetchItem(req.getItemId());
-
-        // Fetch owner phone from auth-service
-        Map owner = fetchUser(ownerId);
-
-        if (item  != null) req.setPickupAddress(item.getPickupAddress());
-        if (owner != null) req.setOwnerPhone((String) owner.get("phone"));
-
-        req.setStatus(RentalStatus.APPROVED);
-        req.setApprovedAt(LocalDateTime.now());
-
-        RentalRequest approved = rentalRepository.save(req);
-        log.info("Rental approved id={} ownerId={}", rentalId, ownerId);
-
-        // Auto-reject all other PENDING requests for the same item
-        List<RentalRequest> otherPending = rentalRepository
-                .findByItemIdAndStatus(req.getItemId(), RentalStatus.PENDING);
-
-        for (RentalRequest other : otherPending) {
-            if (!other.getId().equals(approved.getId())) {
-                other.setStatus(RentalStatus.REJECTED);
-                rentalRepository.save(other);
-                log.info("Auto-rejected competing request id={} itemId={}", other.getId(), req.getItemId());
-            }
-        }
-
-        // Email borrower — approved
-        try {
-            sendBorrowerApprovedEmail(approved, item);
-        } catch (Exception e) {
-            log.warn("Failed to send approval email rentalId={}: {}", rentalId, e.getMessage());
-        }
-
-        return approved;
+    if (!ownerId.equals(req.getOwnerId())) {
+        throw new RuntimeException("Unauthorized");
     }
 
+    ItemResponse item = fetchItem(req.getItemId());
+    Map owner = fetchUser(ownerId);
+
+    if (item != null) req.setPickupAddress(item.getPickupAddress());
+    if (owner != null) req.setOwnerPhone((String) owner.get("phone"));
+
+    req.setStatus(RentalStatus.APPROVED);
+    req.setApprovedAt(LocalDateTime.now());
+
+    RentalRequest approved = rentalRepository.save(req);
+    // Auto reject other pending requests for the same item
+    List<RentalRequest> otherRequests =
+        rentalRepository.findByItemIdAndStatus(req.getItemId(), RentalStatus.PENDING);
+
+    for (RentalRequest other : otherRequests) {
+         if (!other.getId().equals(req.getId())) {
+
+        other.setStatus(RentalStatus.REJECTED);
+        rentalRepository.save(other);
+
+        log.info("Auto rejected competing request id={} itemId={}", other.getId(), req.getItemId());
+
+        try {
+            sendBorrowerRejectedEmail(other);
+        } catch (Exception e) {
+            log.warn("Failed to send rejection email rentalId={}", other.getId());
+        }
+    }
+}
+    // 🔹 UPDATE ITEM STATUS
+    try {
+        restTemplate.put(
+            itemServiceUrl + "/api/items/" + req.getItemId() + "/rented",
+            null
+        );
+    } catch (Exception e) {
+        log.warn("Failed to update item status to RENTED itemId={}", req.getItemId());
+    }
+
+    return approved;
+}
     // ============================================================
     // ================= REJECT REQUEST ===========================
     // ============================================================
@@ -233,19 +235,30 @@ public class RentalService {
 
     public RentalRequest approveReturn(String rentalId, Long ownerId) {
 
-        RentalRequest req = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
+    RentalRequest req = rentalRepository.findById(rentalId)
+            .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
 
-        if (!ownerId.equals(req.getOwnerId())) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        req.setStatus(RentalStatus.RETURN_APPROVED);
-        req.setReturnApprovedAt(LocalDateTime.now());
-
-        log.info("Return approved id={} ownerId={}", rentalId, ownerId);
-        return rentalRepository.save(req);
+    if (!ownerId.equals(req.getOwnerId())) {
+        throw new RuntimeException("Unauthorized");
     }
+
+    req.setStatus(RentalStatus.RETURN_APPROVED);
+    req.setReturnApprovedAt(LocalDateTime.now());
+
+    RentalRequest saved = rentalRepository.save(req);
+
+    // 🔹 UPDATE ITEM STATUS BACK TO AVAILABLE
+    try {
+        restTemplate.put(
+            itemServiceUrl + "/api/items/" + req.getItemId() + "/available",
+            null
+        );
+    } catch (Exception e) {
+        log.warn("Failed to update item status to AVAILABLE itemId={}", req.getItemId());
+    }
+
+    return saved;
+}
 
     // ============================================================
     // ================= INTERNAL HELPERS =========================

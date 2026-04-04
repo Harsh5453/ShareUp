@@ -121,4 +121,17 @@ public class ItemService {
 
         return item;
     }
+
+    // ---------- DELETE ITEM (OWNER ONLY) ----------
+    public void deleteItem(String itemId, Long ownerId) {
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        if (!item.getOwnerId().equals(ownerId)) {
+            throw new AccessDeniedException("You are not allowed to delete this item");
+        }
+
+        itemRepository.delete(item);
+    }
 }

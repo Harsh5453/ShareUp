@@ -39,8 +39,8 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-//    @Column(length = 255)
-//    private String pickupAddress;
+    @Column(length = 255)
+    private String address;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

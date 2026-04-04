@@ -5,6 +5,7 @@ import ItemCard from '../../components/ItemCard'
 import Empty from '../../components/ui/Empty'
 
 export default function MyItems() {
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -24,19 +25,50 @@ export default function MyItems() {
     load()
   }, [])
 
+  // 🔹 DELETE ITEM
+  const handleDelete = async (id) => {
+
+    const confirmDelete = window.confirm("Delete this item?")
+    if (!confirmDelete) return
+
+    try {
+
+      await itemsApi.deleteItem(id)
+
+      // remove item from UI
+      setItems(prev => prev.filter(item => (item.id || item._id) !== id))
+
+      toast.success("Item deleted")
+
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to delete item")
+    }
+  }
+
   if (!loading && items.length === 0) {
     return <Empty text="You have not added any items yet." />
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">My Items</h1>
+
+      <h1 className="text-2xl font-bold mb-6">
+        My Items
+      </h1>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
         {items.map(item => (
-          <ItemCard key={item.id} item={item} />
+          <ItemCard
+            key={item.id || item._id}
+            item={item}
+            onDelete={handleDelete}
+          />
         ))}
+
       </div>
+
     </div>
   )
 }

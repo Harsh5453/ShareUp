@@ -41,15 +41,16 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .phone(request.getPhone())
-                .build();   // ❌ pickupAddress removed
+                .address(request.getAddress())   
+                .build();
 
         User saved = userRepository.save(user);
 
         String token = jwtUtil.generateToken(
-                user.getId(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getPhone()
+                saved.getId(),
+                saved.getEmail(),
+                saved.getRole().name(),
+                saved.getPhone()
         );
 
         return new AuthResponse(
@@ -59,7 +60,6 @@ public class AuthServiceImpl implements AuthService {
                 saved.getRole().name()
         );
     }
-
 
     @Override
     public AuthResponse login(LoginRequest request) {
@@ -88,5 +88,4 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole().name()
         );
     }
-
 }

@@ -20,6 +20,9 @@ public class RegisterRequest {
 
     private String phone;
 
+   
+    private String address;
+
 
     // getters & setters
     public String getName() { return name; }
@@ -37,4 +40,7 @@ public class RegisterRequest {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    // NEW
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 }
