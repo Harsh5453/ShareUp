@@ -11,14 +11,8 @@ export default function BorrowerSidebar({ onClose }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  const handleNavClick = () => {
-    if (onClose) onClose()
-  }
+  const handleLogout = () => { logout(); navigate('/login') }
+  const handleNavClick = () => { if (onClose) onClose() }
 
   return (
     <>
@@ -35,31 +29,21 @@ export default function BorrowerSidebar({ onClose }) {
           content: ''; position: absolute;
           top: -60px; right: -60px;
           width: 200px; height: 200px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(232,93,38,0.15) 0%, transparent 70%);
           pointer-events: none;
         }
-        .bsb-header {
-          padding: 20px 16px 16px;
-          display: flex; align-items: center; justify-content: space-between;
-        }
+        .bsb-header { padding: 20px 16px 16px; display: flex; align-items: center; justify-content: space-between; }
         .bsb-logo-wrap { display: flex; align-items: center; gap: 8px; }
         .bsb-logo-icon {
           width: 28px; height: 28px; border-radius: 7px;
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
+          background: linear-gradient(135deg, #e85d26, #f59e0b);
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .bsb-logo-text {
-          font-family: 'Syne', sans-serif;
-          font-size: 1.15rem; font-weight: 800; color: white; letter-spacing: -0.5px;
-        }
-        .bsb-panel-label {
-          font-size: 0.65rem; color: #4b5563;
-          text-transform: uppercase; letter-spacing: 0.1em; padding: 0 16px 12px;
-        }
+        .bsb-logo-text { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800; color: white; letter-spacing: -0.5px; }
+        .bsb-panel-label { font-size: 0.65rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.1em; padding: 0 16px 12px; }
         .bsb-close {
           background: rgba(255,255,255,0.07); border: none; border-radius: 8px;
-          width: 30px; height: 30px;
-          display: flex; align-items: center; justify-content: center;
+          width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
           color: #6b7280; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
         }
         .bsb-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
@@ -67,8 +51,7 @@ export default function BorrowerSidebar({ onClose }) {
         .bsb-link {
           display: flex; align-items: center; gap: 11px;
           padding: 10px 12px; border-radius: 10px;
-          text-decoration: none; transition: all 0.2s;
-          margin-bottom: 2px; position: relative;
+          text-decoration: none; transition: all 0.2s; margin-bottom: 2px; position: relative;
         }
         .bsb-link .bsb-icon {
           width: 32px; height: 32px; border-radius: 8px;
@@ -77,14 +60,13 @@ export default function BorrowerSidebar({ onClose }) {
           color: #9ca3af; flex-shrink: 0; transition: all 0.2s;
         }
         .bsb-link .bsb-label { font-size: 0.85rem; font-weight: 500; color: #9ca3af; transition: color 0.2s; }
-        .bsb-link:hover .bsb-icon { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .bsb-link:hover .bsb-icon { background: rgba(232,93,38,0.15); color: #e85d26; }
         .bsb-link:hover .bsb-label { color: #fff; }
-        .bsb-link.active .bsb-icon { background: #3b82f6; color: white; }
+        .bsb-link.active .bsb-icon { background: #e85d26; color: white; }
         .bsb-link.active .bsb-label { color: #fff; font-weight: 600; }
         .bsb-link.active::before {
-          content: ''; position: absolute;
-          left: 0; top: 50%; transform: translateY(-50%);
-          width: 3px; height: 60%; background: #3b82f6; border-radius: 0 3px 3px 0;
+          content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+          width: 3px; height: 60%; background: #e85d26; border-radius: 0 3px 3px 0;
         }
         .bsb-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 10px 10px; }
         .bsb-user-card {
@@ -93,7 +75,7 @@ export default function BorrowerSidebar({ onClose }) {
         }
         .bsb-avatar {
           width: 32px; height: 32px; border-radius: 9px;
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
+          background: linear-gradient(135deg, #e85d26, #f59e0b);
           display: flex; align-items: center; justify-content: center;
           font-weight: 700; font-size: 0.85rem; color: white; flex-shrink: 0;
         }
@@ -101,8 +83,7 @@ export default function BorrowerSidebar({ onClose }) {
           display: flex; align-items: center; gap: 11px;
           padding: 10px 12px; border-radius: 10px;
           cursor: pointer; border: none; background: transparent;
-          width: 100%; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
-          margin: 0 0 12px;
+          width: 100%; transition: all 0.2s; font-family: 'DM Sans', sans-serif; margin: 0 0 12px;
         }
         .bsb-logout:hover { background: rgba(239,68,68,0.1); }
         .bsb-logout:hover .bsb-li { color: #ef4444; background: rgba(239,68,68,0.15); }
@@ -124,7 +105,7 @@ export default function BorrowerSidebar({ onClose }) {
                   stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="bsb-logo-text">Share<span style={{ color: '#3b82f6' }}>Up</span></span>
+            <span className="bsb-logo-text">Share<span style={{ color: '#e85d26' }}>Up</span></span>
           </div>
           {onClose && (
             <button className="bsb-close" onClick={onClose} aria-label="Close menu">
