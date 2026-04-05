@@ -253,7 +253,7 @@ export default function Home() {
         {/* ── STATS ── */}
         <section className="stats">
           <div className="stats-inner">
-            {[['500+','Items Listed'],['200+','Active Users'],['98%','Happy Renters'],['₹0','Listing Fee']].map(([v,l]) => (
+            {[['100+','Items Listed'],['50+','Active Users'],['98%','Happy Renters'],['₹0','Listing Fee']].map(([v,l]) => (
               <div key={l} className="stat">
                 <div className="stat-val">{v}</div>
                 <div className="stat-label">{l}</div>
