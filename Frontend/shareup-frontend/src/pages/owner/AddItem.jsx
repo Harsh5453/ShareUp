@@ -2,7 +2,7 @@ import { useState } from 'react'
 import itemsApi from '../../api/items.api'
 import toast from 'react-hot-toast'
 
-const CATEGORIES = ['Electronics', 'Tools', 'Furniture', 'Sports', 'Vehicles', 'Books', 'Other']
+const CATEGORIES = ['All', 'Electronics', 'Furniture', 'Kitchen Appliances', 'Gaming', 'Sports', 'Tools', 'Events', 'Outdoor', 'Vehicles', 'Books', 'Other']
 
 export default function AddItem() {
   const [loading, setLoading] = useState(false)
