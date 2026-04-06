@@ -4,7 +4,7 @@ import itemsApi from '../api/items.api'
 import Loader from '../components/layout/Loader'
 import toast from 'react-hot-toast'
 
-const CATEGORIES = ['All', 'Electronics', 'Tools', 'Furniture', 'Sports', 'Vehicles', 'Books', 'Other']
+const CATEGORIES = ['All', 'Electronics', 'Furniture', 'Kitchen Appliances', 'Gaming', 'Sports', 'Tools', 'Events', 'Outdoor', 'Vehicles', 'Books', 'Other']
 
 const FEATURES = [
   { icon: '💸', title: 'Save Money',     desc: 'Rent instead of buying expensive items you rarely use.' },
