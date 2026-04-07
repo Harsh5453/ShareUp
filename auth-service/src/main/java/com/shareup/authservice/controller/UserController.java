@@ -25,7 +25,8 @@ public class UserController {
         res.setId(user.getId());
         res.setEmail(user.getEmail());
         res.setName(user.getName());
-        res.setPhone(user.getPhone());  
+        res.setPhone(user.getPhone());
+        res.setAddress(user.getAddress());  
 
         return res;
     }
