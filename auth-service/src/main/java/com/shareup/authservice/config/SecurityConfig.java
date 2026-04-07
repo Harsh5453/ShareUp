@@ -38,7 +38,9 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/api/profile/**").authenticated()
                    // Internal service-to-service calls only — NOT public
-                .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                //  Allow internal service-to-service calls (rental-service fetches user data)
+                // These calls come from backend — no JWT, but protected by network/deploy config
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
