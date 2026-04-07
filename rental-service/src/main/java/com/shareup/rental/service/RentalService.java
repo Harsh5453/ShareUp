@@ -69,14 +69,22 @@ public class RentalService {
             throw new RuntimeException("endDate must be after startDate");
         }
 
+        // ✅ Fetch borrower address from auth-service (not in JWT)
+        String borrowerAddress = null;
+        Map borrowerUser = fetchUser(borrowerId);
+        if (borrowerUser != null) {
+            borrowerAddress = (String) borrowerUser.get("address");
+        }
+
         RentalRequest request = new RentalRequest();
         request.setItemId(dto.getItemId());
         request.setOwnerId(dto.getOwnerId());
         request.setBorrowerId(borrowerId);
         request.setStartDate(dto.getStartDate());
-        request.setEndDate(dto.getEndDate()); 
+        request.setEndDate(dto.getEndDate());
         request.setBorrowerEmail(borrowerEmail);
         request.setBorrowerPhone(borrowerPhone);
+        request.setBorrowerAddress(borrowerAddress); // ✅ now set
 
         request.setStatus(RentalStatus.PENDING);
         request.setCreatedAt(LocalDateTime.now());
