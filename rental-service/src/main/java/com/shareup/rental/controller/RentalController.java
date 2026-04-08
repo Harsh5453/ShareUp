@@ -162,4 +162,9 @@ public class RentalController {
         if (rental.getReturnImageUrl() == null) return ResponseEntity.notFound().build();
         return ResponseEntity.status(302).header("Location", rental.getReturnImageUrl()).build();
     }
+    // ================ Health Endpoint =============================
+    @GetMapping("/health")
+    public String health() {
+    return "OK";
+}
 }
