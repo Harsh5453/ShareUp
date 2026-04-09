@@ -189,7 +189,6 @@ Borrower                                   Owner
    │                                          │
    │◄─── PUT /rentals/approve-return/{id} ────│  Status: RETURN_APPROVED
    │                                          │
-   │──── Rate the Owner (1-10 ⭐ + review) ──►│
 ```
 
 ---
