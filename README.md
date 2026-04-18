@@ -1,5 +1,5 @@
 # 🔄 ShareUp — Peer-to-Peer Rental Platform
-
+ 
 > A microservices-based full-stack platform that lets users list, browse, and rent items from each other — with a full rental lifecycle, image uploads, ratings, and email notifications. 
  
 ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
